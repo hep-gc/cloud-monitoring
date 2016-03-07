@@ -8,7 +8,7 @@ exported.
 
 ## Quickstart
 
-Using `virtualenv`, intall the dependencies:
+Using `virtualenv`, install the dependencies:
 
 ```bash
 $ virtualenv venv
@@ -19,7 +19,7 @@ $ pip install -r requirements.txt
 Then, run the Flask web server:
 
 ```bash
-$ python run.py
+(venv) $ python run.py
 ```
 
 ## Production
