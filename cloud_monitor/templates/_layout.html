@@ -1,52 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<title>Cloud Monitor</title>
+  <meta charset="utf-8">
+  <title>Cloud Monitor</title>
 
-	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='cloud.css') }}">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='cloud.css') }}">
 
-	<script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
-	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-	<script src="{{ url_for('static', filename='cloud.js') }}"></script>
+  <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="{{ url_for('static', filename='cloud.js') }}"></script>
 </head>
 <body>
-	<header>
-		<h1>Cloud Monitor</h1>
-		<ul class="nav">
-			<li><a href="#" id="select-range">Last 1 hour</a></li>
-			<li><a href="#" id="export" class="disabled">Export</a></li>
-			<li><a href="#" id="refresh">Refresh <span>60</span></a></li>
-		</ul>
-	</header>
-	<div id="range" class="range" style="display: none;">
-		<form class="enter-range">
-			<h3>Enter Range</h3>
-			<ul>
-				<li>
-					<label>From:</label>
-					<input id="date-range-from" name="from" value="-1h">
-				</li>
-				<li>
-					<label>End:</label>
-					<input id="date-range-end" name="end" value="now">
-				</li>
-				<li>
-					<button id="apply-date-range">Apply</button>
-				</li>
-			</ul>
-		</form>
-		<div class="select-range">
-			<h3>Quick Ranges</h3>
-			{% for ranges in config.DATE_RANGES %}
-				<ul>
-					{% for text, range in ranges.iteritems(): %}
-						<li><a class="date-range {{ 'selected' if range[0] == '-1h' }}" data-from="{{ range[0] }}" data-end="{{ range[1] }}" href="">{{ text }}</a></li>
-					{% endfor %}
-				</ul>
-			{% endfor %}
-		</div>
-	</div>
-	{% block content %}{% endblock %}
+  <header>
+    <h1>Cloud Monitor</h1>
+    <ul class="nav">
+      <li><a href="#" id="select-range">Last 1 hour</a></li>
+      <li><a href="#" id="export" class="disabled">Export</a></li>
+      <li><a href="#" id="refresh">Refresh <span>60</span></a></li>
+    </ul>
+  </header>
+  <div id="range" class="range" style="display: none;">
+    <form class="enter-range">
+      <h3>Enter Range</h3>
+      <ul>
+        <li>
+          <label>From:</label>
+          <input id="date-range-from" name="from" value="-1h">
+        </li>
+        <li>
+          <label>End:</label>
+          <input id="date-range-end" name="end" value="now">
+        </li>
+        <li>
+          <button id="apply-date-range">Apply</button>
+        </li>
+      </ul>
+    </form>
+    <div class="select-range">
+      <h3>Quick Ranges</h3>
+      {% for ranges in config.DATE_RANGES %}
+        <ul>
+          {% for text, range in ranges.iteritems(): %}
+            <li><a class="date-range {{ 'selected' if range[0] == '-1h' }}" data-from="{{ range[0] }}" data-end="{{ range[1] }}" href="">{{ text }}</a></li>
+          {% endfor %}
+        </ul>
+      {% endfor %}
+    </div>
+  </div>
+  {% block content %}{% endblock %}
 </body>
 </html>
