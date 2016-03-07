@@ -24,20 +24,10 @@ HEARTBEATS = {
 
 # These grids won't be shown at all
 HIDE_GRIDS = [
-    'gcecs_heprc_uvic_ca',
 ]
 
 # Specify a list of clouds to show for each grid (or show all by default)
 GRID_CLOUDS = {
-    'IAAS': [
-        'cc-east',
-        'cc-west',
-        'dair-ab',
-        'dair-qc',
-    ],
-    'ATLAS-Cern': [
-        'cern-atlas',
-    ],
 }
 
 # Date ranges for the drop-down menu
