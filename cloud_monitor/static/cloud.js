@@ -130,7 +130,6 @@ var CloudMonitor = {
           $.each(cloud.idle, function(vmtype, count) {
             var $cloud = $grid.find('.cloud-' + cloud_name + '.vmtype-' + vmtype);
             $cloud.find('.idle-vms').text(count);
-            if (count) $cloud.removeClass('hide');
           });
 
           $.each(cloud.vms, function(vmtype, vms) {
@@ -138,8 +137,10 @@ var CloudMonitor = {
 
             $.each(vms, function(status, count) {
               $cloud.find('.vms.' + status).text(count);
-              if (count) $cloud.removeClass('hide');
             });
+
+            if (vms['hide']) $cloud.addClass('hide');
+            else $cloud.removeClass('hide');
           });
 
           $.each(cloud.slots, function(vmtype, slots) {
@@ -147,7 +148,6 @@ var CloudMonitor = {
 
             $.each(slots, function(slot, count) {
               $cloud.find('.slots.' + slot).text(count);
-              if (count) $cloud.removeClass('hide');
             });
           });
         });
