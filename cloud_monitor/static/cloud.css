@@ -51,6 +51,14 @@ h2 { background: #656a76; color: #fff; font-size: 14px; padding: 0 10px; margin:
 .nav a.disabled { background: #333; color: #999; cursor: default; }
 
 .hide { display: none; }
+.show-all .hide { display: table-row; }
+
+.options { overflow: hidden; position: absolute; top: 50px; right: 0; z-index: 99; width: 300px; padding: 10px; background: #101010; line-height: 20px; }
+.options h3 { color: #fff; margin: 10px 10px; }
+.options ul { margin: 0 10px; padding: 0; list-style: none; }
+.options li { margin: 0 0 10px; }
+.options label { color: #bbb; }
+.options button { border: none; padding: 0 5px; background: #33b5e5; font: 14px/30px helvetica, arial, sans-serif; font-weight: bold; }
 
 .range { overflow: hidden; position: absolute; top: 50px; right: 0; z-index: 99; width: 600px; padding: 10px; background: #101010; line-height: 20px; }
 .range h3 { color: #fff; margin: 10px 10px; }

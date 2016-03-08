@@ -53,6 +53,11 @@ var CloudMonitor = {
       $('#range').toggle();
     });
 
+    $('#set-options').on('click', function(e) {
+      e.preventDefault();
+      $('#options').toggle();
+    });
+
     $('#export').on('click', function(e) {
       e.preventDefault();
       if (CloudMonitor.Plot.traces.length > 0) {
@@ -92,6 +97,14 @@ var CloudMonitor = {
       }
 
       CloudMonitor.Plot.refresh();
+    });
+
+    $('#save-options').on('click', function(e) {
+      e.preventDefault();
+      CloudMonitor.setOptions({
+        showAllClouds: $('#show-all-clouds').prop('checked')
+      });
+      $('#options').hide();
     });
 
     $('#plot').on('plotly_relayout', function(e) {
@@ -168,6 +181,14 @@ var CloudMonitor = {
       if ($(this).text() == '0') $(this).addClass('zero');
       else $(this).removeClass('zero');
     });
+  },
+
+  setOptions: function(opts) {
+    if (opts.showAllClouds) {
+      $('table').addClass('show-all');
+    } else {
+      $('table').removeClass('show-all');
+    }
   }
 }
 

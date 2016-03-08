@@ -16,9 +16,24 @@
     <ul class="nav">
       <li><a href="#" id="select-range">Last 1 hour</a></li>
       <li><a href="#" id="export" class="disabled">Export</a></li>
+      <li><a href="#" id="set-options">Options</a></li>
       <li><a href="#" id="refresh">Refresh <span>60</span></a></li>
     </ul>
   </header>
+   <div id="options" class="options" style="display: none;">
+    <form class="options-form">
+      <h3>Options</h3>
+      <ul>
+        <li>
+          <input id="show-all-clouds" type="checkbox" name="show_all_clouds">
+          <label for="show-all-clouds">Show All Clouds</label>
+        </li>
+        <li>
+          <button id="save-options">Save</button>
+        </li>
+      </ul>
+    </form>
+  </div>
   <div id="range" class="range" style="display: none;">
     <form class="enter-range">
       <h3>Enter Range</h3>
