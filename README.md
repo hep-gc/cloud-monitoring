@@ -13,7 +13,7 @@ Using `virtualenv`, install the dependencies:
 ```bash
 $ virtualenv venv
 $ . venv/bin/activate
-$ pip install -r requirements.txt
+(venv) $ pip install -r requirements.txt
 ```
 
 Then, run the Flask web server:
