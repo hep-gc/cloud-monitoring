@@ -52,6 +52,9 @@ def summary():
                 if grids[grid]['clouds'][cloud]['vms'][vmtype]['total'] == 0:
                     grids[grid]['clouds'][cloud]['vms'][vmtype]['hide'] = True
 
+            if 'jobs' in grids[grid]['clouds'][cloud] and grids[grid]['clouds'][cloud]['jobs']['all']['held'] > 0:
+                grids[grid]['clouds'][cloud]['vms'][vmtype]['hide'] = False
+
     return grids
 
 

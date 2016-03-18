@@ -60,6 +60,7 @@
                 <th class="group" colspan="8">Condor Slots</th>
                 <th>&nbsp;</th>
                 <th rowspan="2" class="group count">Idle VMs</th>
+                <th rowspan="2" class="group count">Held Jobs</th>
               </tr>
               <tr>
 
@@ -118,6 +119,12 @@
                     <td>&nbsp;</td>
 
                     <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.idle.{{ vmtype }}" class="metric count idle-vms">{{ cloud['idle'][vmtype] or '0' }}</td>
+
+                    {% if 'jobs' in cloud %}
+                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.jobs.all.held" class="metric count held-jobs">{{ cloud['jobs']['all']['held'] or '0' }}</td>
+                    {% else %}
+                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.jobs.all.held" class="metric count held-jobs">0</td>
+                    {% endif %}
 
                   </tr>
 
