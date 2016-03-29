@@ -123,7 +123,7 @@
 
                     {% if loop.first %}
                       {% if 'lost' in cloud %}
-                        <td data-path="diffSeries(sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.api-vms.{running,starting,error}),sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.vms.*.total))" class="metric count lost-vms" rowspan="{{ vms|length }}">
+                        <td data-path="transformNull(removeBelowValue(diffSeries(sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.api-vms.{running,starting,error}),sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.vms.*.total)), 0), 0)" class="metric count lost-vms" rowspan="{{ vms|length }}">
                           {{ cloud['lost'] }}
                         </td>
                       {% else %}
