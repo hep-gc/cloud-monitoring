@@ -42,7 +42,7 @@
           {% set enabled = grid['clouds'][cloud_name]['enabled'] %}
           {% set quota = grid['clouds'][cloud_name]['quota'] or '-' %}
           {% set path  = 'grids.{}.clouds.{}'.format(grid_name, cloud_name) %}
-          <li data-path="{{ path }}.enabled,{{ path }}.quota" class="metric cloud {{ 'enabled' if enabled else 'disabled' }} ">
+          <li data-path="{{ path }}.enabled|{{ path }}.quota" class="metric cloud {{ 'enabled' if enabled else 'disabled' }} ">
             {{ cloud_name }}
               <span>({{ quota }})</span>
           </li>
@@ -60,6 +60,7 @@
                 <th class="group" colspan="8">Condor Slots</th>
                 <th>&nbsp;</th>
                 <th rowspan="2" class="group count">Idle VMs</th>
+                <th rowspan="2" class="group count">Lost VMs</th>
                 <th rowspan="2" class="group count">Held Jobs</th>
               </tr>
               <tr>
@@ -87,7 +88,7 @@
 
                 {% for vmtype in vms %}
 
-                  <tr class="cloud-{{ cloud_name }} vmtype-{{ vmtype }} {{ 'hide' if vms[vmtype]['hide'] }}">
+                  <tr class="cloud-{{ cloud_name }} vmtype-{{ vmtype }} {{ 'hide' if cloud['hide'] }}">
 
                     <td class="name">{{ cloud_name }}<br><small>{{ vmtype }}</small></td>
 
@@ -120,10 +121,24 @@
 
                     <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.idle.{{ vmtype }}" class="metric count idle-vms">{{ cloud['idle'][vmtype] or '0' }}</td>
 
-                    {% if 'jobs' in cloud %}
-                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.jobs.all.held" class="metric count held-jobs">{{ cloud['jobs']['all']['held'] or '0' }}</td>
-                    {% else %}
-                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.jobs.all.held" class="metric count held-jobs">0</td>
+                    {% if loop.first %}
+                      {% if 'lost' in cloud %}
+                        <td data-path="diffSeries(sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.api-vms.{running,starting,error}),sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.vms.*.total))" class="metric count lost-vms" rowspan="{{ vms|length }}">
+                          {{ cloud['lost'] }}
+                        </td>
+                      {% else %}
+                        <td rowspan="{{ vms|length }}"></td>
+                      {% endif %}
+                    {% endif %}
+
+                    {% if loop.first %}
+                        <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.jobs.all.held" class="metric count held-jobs" rowspan="{{ vms|length }}">
+                          {% if 'jobs' in cloud %}
+                            {{ cloud['jobs']['all']['held'] or '0' }}
+                          {% else %}
+                            0
+                          {% endif %}
+                        </td>
                     {% endif %}
 
                   </tr>

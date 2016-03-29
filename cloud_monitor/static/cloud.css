@@ -15,7 +15,7 @@ td.name { line-height: 12px; }
 td.count { color: #666; }
 td.running { color: #390; }
 td.idle-vms { color: #c90; }
-td.held, td.error, td.held-jobs { color: #c40; }
+td.held, td.error, td.held-jobs, td.lost-vms { color: #c40; }
 td.zero { color: #bbb; font-weight: normal; }
 
 .tables { overflow: hidden; }

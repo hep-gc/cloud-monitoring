@@ -12,6 +12,7 @@ SUMMARY_METRICS = [
     'grids.*.clouds.*.slots.*.*',
     'grids.*.clouds.*.jobs.*.*',
     'grids.*.clouds.*.vms.*.*',
+    'grids.*.clouds.*.api-vms.*',
     'grids.*.heartbeat.*',
     'grids.*.jobs.*.*',
 ]

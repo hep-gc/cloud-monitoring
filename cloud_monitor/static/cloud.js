@@ -31,7 +31,7 @@ var CloudMonitor = {
 
   attachEventListeners: function() {
     $(document).on('click', '.metric', function() {
-      var traces = $(this).data('path').split(',');
+      var traces = $(this).data('path').split('|');
       CloudMonitor.Plot.toggleTraces(traces);
       $(this).toggleClass('plotted');
 
@@ -140,6 +140,15 @@ var CloudMonitor = {
         });
 
         $.each(grid.clouds, function(cloud_name, cloud) {
+
+          var $cloud = $grid.find('.cloud-' + cloud_name);
+          if (cloud['hide']) $cloud.addClass('hide');
+          else $cloud.removeClass('hide');
+
+          if (cloud['lost'] !== undefined) {
+            $cloud.find('.lost-vms').text(cloud['lost'])
+          }
+
           $.each(cloud.idle, function(vmtype, count) {
             var $cloud = $grid.find('.cloud-' + cloud_name + '.vmtype-' + vmtype);
             $cloud.find('.idle-vms').text(count);
@@ -151,9 +160,6 @@ var CloudMonitor = {
             $.each(vms, function(status, count) {
               $cloud.find('.vms.' + status).text(count);
             });
-
-            if (vms['hide']) $cloud.addClass('hide');
-            else $cloud.removeClass('hide');
           });
 
           $.each(cloud.slots, function(vmtype, slots) {
@@ -178,7 +184,7 @@ var CloudMonitor = {
 
   updateCellClasses: function() {
     $('td.count').each(function() {
-      if ($(this).text() == '0') $(this).addClass('zero');
+      if ($(this).text().trim() == '0') $(this).addClass('zero');
       else $(this).removeClass('zero');
     });
   },

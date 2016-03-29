@@ -43,17 +43,25 @@ def summary():
             grids[grid]['hide'] = True
 
         # Hide clouds with no VMs
-        for cloud in grids[grid]['clouds']:
-            if 'vms' not in grids[grid]['clouds'][cloud]:
-                grids[grid]['clouds'][cloud]['hide'] = True
+        for cloud_name, cloud in grids[grid]['clouds'].iteritems():
+            if 'vms' not in cloud:
+                cloud['hide'] = True
                 continue
 
-            for vmtype in grids[grid]['clouds'][cloud]['vms']:
-                if grids[grid]['clouds'][cloud]['vms'][vmtype]['total'] == 0:
-                    grids[grid]['clouds'][cloud]['vms'][vmtype]['hide'] = True
+            hide = True
+            for vmtype in cloud['vms']:
+                if cloud['vms'][vmtype]['total'] != 0:
+                    hide = False
+                    
+            cloud['hide'] = hide
 
-            if 'jobs' in grids[grid]['clouds'][cloud] and grids[grid]['clouds'][cloud]['jobs']['all']['held'] > 0:
-                grids[grid]['clouds'][cloud]['vms'][vmtype]['hide'] = False
+            if 'jobs' in cloud and cloud['jobs']['all']['held'] > 0:
+                cloud['hide'] = False
+
+            if 'api-vms' in cloud:
+                cloud['lost'] = cloud['api-vms']['error'] + cloud['api-vms']['starting'] + cloud['api-vms']['running'] - sum([vmtype['total'] for vmtype in cloud['vms'].values()])
+                if cloud['lost'] < 0:
+                    cloud['lost'] = 0
 
     return grids
 
@@ -70,6 +78,7 @@ def history(targets, start='-1h', end='now'):
         A list of metric values.
     """
 
+    print targets
     metrics = query(targets, start, end)
 
     try:
