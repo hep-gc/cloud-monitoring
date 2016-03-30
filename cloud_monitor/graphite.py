@@ -59,7 +59,7 @@ def summary():
                 cloud['hide'] = False
 
             if 'api-vms' in cloud:
-                cloud['lost'] = cloud['api-vms']['error'] + cloud['api-vms']['starting'] + cloud['api-vms']['running'] - sum([vmtype['total'] for vmtype in cloud['vms'].values()])
+                cloud['lost'] = cloud['api-vms'].get('error', 0) + cloud['api-vms'].get('starting', 0) + cloud['api-vms'].get('running', 0) - sum([vmtype['total'] for vmtype in cloud['vms'].values()])
                 if cloud['lost'] < 0:
                     cloud['lost'] = 0
 
