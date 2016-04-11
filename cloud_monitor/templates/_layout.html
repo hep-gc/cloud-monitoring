@@ -8,17 +8,32 @@
 
   <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script src="{{ url_for('static', filename='cloud.js') }}"></script>
+
+  {% if request.path == '/' %}
+    <script src="{{ url_for('static', filename='cloud.js') }}"></script>
+  {% endif %}
 </head>
 <body>
   <header>
     <h1>Cloud Monitor</h1>
-    <ul class="nav">
-      <li><a href="#" id="select-range">Last 1 hour</a></li>
-      <li><a href="#" id="export" class="disabled">Export</a></li>
-      <li><a href="#" id="set-options">Options</a></li>
-      <li><a href="#" id="refresh">Refresh <span>60</span></a></li>
-    </ul>
+    <nav>
+      <ul>
+        {% if request.path != '/' %}
+          <li><a href="/">Overview</a></li>
+        {% endif %}
+        {% if back %}
+          <li><a href="{{ back }}">Cloud</a></li>
+        {% endif %}
+      </ul>
+      {% if request.path == '/' %}
+        <ul class="right">
+          <li><a href="#" id="select-range">Last 1 hour</a></li>
+          <li><a href="#" id="export" class="disabled">Export</a></li>
+          <li><a href="#" id="set-options">Options</a></li>
+          <li><a href="#" id="refresh">Refresh <span>60</span></a></li>
+        </ul>
+      {% endif %}
+    </nav>
   </header>
    <div id="options" class="options" style="display: none;">
     <form class="options-form">

@@ -4,6 +4,8 @@ table { border-collapse: collapse; margin: 0 0 20px; }
 
 th { color: #999; font-size: 12px; line-height: 15px; text-align: left; }
 td { border-top: solid 1px #eee; padding: 2px 0; }
+.text th { color: #000; font-weight: normal; font-size: 14px; }
+.text td { border: none; }
 .count { width: 60px; text-align: center; font-weight: bold; }
 .count.narrow { width: 35px; }
 td.count { font-size: 18px; line-height: 20px; font-family: 'source code pro', monospace; }
@@ -11,6 +13,7 @@ td.count { font-size: 18px; line-height: 20px; font-family: 'source code pro', m
 th.group { font-size: 14px; text-align: center; vertical-align: bottom; }
 th.name, td.name { width: 120px; text-align: left; }
 td.name { line-height: 12px; }
+table.vms td.name { width: 400px; }
 
 td.count { color: #666; }
 td.running { color: #390; }
@@ -18,23 +21,36 @@ td.idle-vms { color: #c90; }
 td.held, td.error, td.held-jobs, td.lost-vms { color: #c40; }
 td.zero { color: #bbb; font-weight: normal; }
 
+.status span { display: inline-block; width: 80px; padding: 0; background: #eee; font-size: 0.8em; font-weight: bold; text-align: center; text-transform: uppercase; }
+.gone td { color: #999; text-decoration: line-through; }
+.running .status span { background: #390; color: #fff; }
+.starting .status span, .completed .status span { background: #dfc; color: #390; }
+.idle .status span { background: #cdf; color: #039; }
+.retiring .status span { background: #999; color: #fff; }
+.error .status span { background: #c40; color: #fff; }
+.held .status span { background: #ba0; color: #fff; }
+
 .tables { overflow: hidden; }
 .table { float: left; border: solid 10px #ecf0f1; border-top: none; padding: 10px; background: #fff; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; }
 .table + .table { border-left: 0; }
 .tables table { width: 100%; margin: 0; }
 
-header { position: relative; display: block; height: 50px; background: #101010; }
+header { position: relative; overflow: hidden; display: block; height: 50px; background: #101010; }
 
 .sections { overflow: hidden; }
 section { display: block; float: left; }
 section.main { width: 100%; }
 section.side { width: 0%; }
 
-h1 { color: #fff; margin: 0; padding: 10px; font-size: 20px; }
+h1 { float: left; color: #fff; margin: 0; padding: 10px; font-size: 20px; }
 h2 { background: #656a76; color: #fff; font-size: 14px; padding: 0 10px; margin: 0; }
 
-.grid-name { background: #656a76; color: #fff; font-size: 14px; padding: 0 10px; margin: 0; }
+.tables h3 { background: #ccc; color: #000; font-size: 14px; padding: 0 10px; margin: -10px -10px 8px; }
+.tables table + h3 { margin-top: 10px; }
+
+.grid-name { overflow: hidden; background: #656a76; color: #fff; font-size: 14px; padding: 0 10px; margin: 0; }
 .grid-name h2 { float: left; padding: 0 10px 0 0; }
+.grid-name + .tables { margin-top: 10px; }
 
 .metric:hover { cursor: pointer; background: #f9f9f9; color: #000; -webkit-user-select: none; -moz-user-select: none; }
 .plotted, .plotted:hover { background: #ffd !important; }
@@ -44,11 +60,13 @@ h2 { background: #656a76; color: #fff; font-size: 14px; padding: 0 10px; margin:
 .close { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; background: #656a76; color: #fff; font-size: 18px; font-weight: bold; line-height: 26px; text-align: center; text-decoration: none; border-radius: 25px; }
 .close:hover { background: #000; }
 
-.nav { position: absolute; top: 10px; right: 10px; height: 30px; margin: 0; padding: 0; list-style: none; }
-.nav li { float: left; margin: 0 0 0 10px; padding: 0; }
-.nav a { display: inline-block; height: 30px; background: #656a76; color: #fff; font-weight: bold; line-height: 30px; padding: 0 10px; border-radius: 5px; text-decoration: none; }
-.nav a span { display: inline-block; width: 1.5em; color: #a7aab3; font-weight: normal; text-align: right; }
-.nav a.disabled { background: #333; color: #999; cursor: default; }
+nav { overflow: hidden; margin: 10px 10px 0 0; }
+nav ul { float: left; height: 30px; margin: 0; padding: 0; list-style: none; }
+nav ul.right { float: right; }
+nav li { float: left; margin: 0 0 0 10px; padding: 0; }
+nav a { display: inline-block; height: 30px; background: #656a76; color: #fff; font-weight: bold; line-height: 30px; padding: 0 10px; border-radius: 5px; text-decoration: none; }
+nav a span { display: inline-block; width: 1.5em; color: #a7aab3; font-weight: normal; text-align: right; }
+nav a.disabled { background: #333; color: #999; cursor: default; }
 
 .hide { display: none; }
 .show-all .hide { display: table-row; }
@@ -87,3 +105,12 @@ h2 { background: #656a76; color: #fff; font-size: 14px; padding: 0 10px; margin:
 .heartbeats li { float: left; margin: 5px 5px 5px 0; padding: 0 5px; background: #fff; line-height: 20px; }
 .heartbeats .up { background: #390; color: #fff; }
 .heartbeats .down { background: #930; color: #fff; }
+
+.tables a { color: #33b5e5; text-decoration: none; font-weight: bold; }
+.tables a:hover { color: #000; }
+
+.logs { font-family: 'source code pro', monospace; font-size: 12px; line-height: 16px; }
+.logs pre { margin: 0; }
+
+.log-info td { color: #999; background: #f9f9f9; padding: 5px 2px; border-top: solid 1px #ddd; }
+.log-message td { border: none; padding: 5px 2px; }

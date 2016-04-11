@@ -5,11 +5,32 @@ import json
 import config
 from cloud_monitor import app
 from graphite import history, path_to_name, summary
+import status
 
 
 @app.route('/')
 def index():
     return render_template('index.html', grids=summary(), config=config)
+
+
+@app.route('/clouds/<grid_name>/<cloud_name>')
+def cloud(grid_name, cloud_name):
+    cloud = status.cloud(grid_name, cloud_name)
+    return render_template('cloud.html', cloud=cloud, config=config)
+
+
+@app.route('/clouds/<grid_name>/<cloud_name>/vms/<vm_hostname>')
+def vm(grid_name, cloud_name, vm_hostname):
+    vm = status.vm(grid_name, vm_hostname)
+    logs = status.logs('"{0}" "{1}"'.format(vm['id'], vm['hostname']))
+    return render_template('vm.html', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), vm=vm, logs=logs, config=config)
+
+
+@app.route('/clouds/<grid_name>/<cloud_name>/jobs/<job_id>')
+def jobs(grid_name, cloud_name, job_id):
+    job = status.job(grid_name, job_id)
+    logs = status.logs('"{0}"'.format(job_id))
+    return render_template('job.html', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), job=job, logs=logs, config=config)
 
 
 @app.route('/json', methods=['GET', 'POST'])
@@ -26,6 +47,8 @@ def data():
             traces.append(trace)
 
         return json.dumps(traces, indent=4, separators=(',', ': '))
+    elif 'mongo' in request.values:
+        return json.dumps(status.summary(), indent=4, separators=(',', ': '))
     else:
         return json.dumps(summary(), indent=4, separators=(',', ': '))
 

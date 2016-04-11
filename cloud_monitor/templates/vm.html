@@ -1,0 +1,83 @@
+{% extends "_layout.html" %}
+
+{% block content %}
+  <div class="grid">
+    <div class="grid-name">
+      <h2>{{ vm.grid }} &rarr; {{ vm.cloud }} &rarr; VM {{ vm.hostname }}</h2>
+    </div>
+    <div class="tables">
+      <div class="table" style="width: 50%">
+        <h3>VM Status</h3>
+        <table class="text">
+          <tr>
+            <th>ID:</th>
+            <td>{{ vm.id }}</td>
+          </tr>
+          <tr>
+            <th>Hostname:</th>
+            <td>{{ vm.hostname }}</td>
+          </tr>
+          <tr class="{{ vm.status }}">
+            <th>Status:</th>
+            <td class="status"><span>{{ vm.status }}</span></td>
+          </tr>
+          <tr>
+            <th>Type:</th>
+            <td>{{ vm.type }}</td>
+          </tr>
+          <tr>
+            <th>Booted:</th>
+            <td>{{ vm.initialize_time.strftime('%H:%M:%S %d-%b') }}</td>
+          </tr>
+          <tr>
+            <th>Updated:</th>
+            <td>{{ vm.last_updated.strftime('%H:%M:%S %d-%b') }}</td>
+          </tr>
+        </table>
+        <h3>Status History</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in vm.status_history %}
+              <tr class="{{ row[1] }}">
+                <td>{{ row[0].strftime('%H:%M:%S %d-%b') }}</td>
+                <td class="status"><span>{{ row[1] }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <h3>Job History</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Status</th>
+              <th>Queued</th>
+              <th>Status Changed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for job in vm.jobs %}
+              <tr class="{{ job['status'] }}">
+                <td>
+                  <a href="/clouds/{{ job.grid }}/{{ job.cloud }}/jobs/{{ job._id }}">{{ job._id }}</a>
+                </td>
+                <td class="status"><span>{{ job['status'] }}</span></td>
+                <td>{{ job.queue_date.strftime('%H:%M:%S %d-%b') }}</td>
+                <td>
+                  {{ job.status_history.pop()[0].strftime('%H:%M:%S %d-%b') }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include '_logs.html' %}
+    </div>
+  </div>
+{% endblock %}
