@@ -1,16 +1,9 @@
 from datetime import datetime, timedelta
-from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search, Q
 import json
-from pymongo import MongoClient
 import requests
 
-import config
 
-db = MongoClient().cloud_status
-es = Elasticsearch()
-
-def summary():
+def summary(db):
     paths = {}
 
     cursor = db.vms.aggregate([
@@ -38,7 +31,7 @@ def summary():
     return paths
 
 
-def cloud(grid_name, cloud_name):
+def cloud(db, grid_name, cloud_name):
     """Query status database for 
     """
     cursor = db.vms.find({
@@ -67,7 +60,7 @@ def cloud(grid_name, cloud_name):
     }
     return cloud
 
-def vm(grid_name, vm_hostname):
+def vm(db, grid_name, vm_hostname):
     vm = db.vms.find_one({
         'grid': grid_name,
         'hostname': vm_hostname,
@@ -92,7 +85,7 @@ def vm(grid_name, vm_hostname):
 
     return vm
 
-def job(grid_name, job_id):
+def job(db, grid_name, job_id):
     job = db.jobs.find_one({
         'grid': grid_name,
         '_id': job_id,
@@ -100,7 +93,7 @@ def job(grid_name, job_id):
 
     return job
 
-def logs(terms):
+def logs(es, terms):
     response = es.search(index='logstash-*', size=200, body={
         'query': {
             'filtered': {

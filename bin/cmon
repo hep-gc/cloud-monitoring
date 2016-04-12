@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+import argparse
+import json
+import logging
+import pika
+from pymongo import MongoClient
+import socket
+import sys
+import yaml
+
+import cmon
+import cmon.status
+
+
+DEFAULT_CONFIG_FILE = '/etc/cmon/cmon.yml'
+
+
+logging.basicConfig(level=logging.INFO)
+
+parser = argparse.ArgumentParser(description="C'mon: monitor your clouds")
+parser.add_argument('--debug', action='store_true')
+parser.add_argument('--config-file', type=str, default=DEFAULT_CONFIG_FILE)
+args = parser.parse_args()
+
+with open(args.config_file, 'r') as config_file:
+    config = yaml.load(config_file)
+
+db = MongoClient(config['mongodb']['server'], config['mongodb']['port'])[config['mongodb']['db']]
+
+creds = pika.PlainCredentials(config['rabbitmq']['user'], config['rabbitmq']['secret'])
+params = pika.ConnectionParameters(config['rabbitmq']['server'], config['rabbitmq']['port'], config['rabbitmq']['vhost'], creds)
+rmq = pika.BlockingConnection(params)
+
+channel = rmq.channel()
+
+exchange = config['rabbitmq']['exchange']
+channel.exchange_declare(exchange=exchange, exchange_type='fanout')
+
+queue = config['rabbitmq']['queue']
+channel.queue_declare(queue=queue, durable=True)
+channel.queue_bind(exchange=exchange, queue=queue)
+
+try:
+    def callback(ch, method, props, body):
+        cmon.status.parse(json.loads(body), db)
+
+        # Acknowledge message to prevent re-queueing
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    channel.basic_consume(callback, queue=queue)
+    channel.start_consuming()
+
+except KeyboardInterrupt:
+    logging.info('Shutting down...')
+
+finally:
+    rmq.close()

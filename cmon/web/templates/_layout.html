@@ -68,7 +68,7 @@
     </form>
     <div class="select-range">
       <h3>Quick Ranges</h3>
-      {% for ranges in config.DATE_RANGES %}
+      {% for ranges in date_ranges %}
         <ul>
           {% for text, range in ranges.iteritems(): %}
             <li><a class="date-range {{ 'selected' if range[0] == '-1h' }}" data-from="{{ range[0] }}" data-end="{{ range[1] }}" href="">{{ text }}</a></li>

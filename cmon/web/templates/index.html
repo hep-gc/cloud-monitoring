@@ -20,7 +20,7 @@
         <h2>{{ grid_name }}</h2>
 
         <ul class="heartbeats">
-          {% for heartbeat_id, heartbeat_name in config.HEARTBEATS.iteritems() %}
+          {% for heartbeat_id, heartbeat_name in heartbeats.iteritems() %}
             {% set path = 'grids.{}.heartbeat.{}'.format(grid_name, heartbeat_id) %}
             {% if heartbeat_id not in grid['heartbeat'] or not grid['heartbeat'][heartbeat_id] %}
               <li class="heartbeat heartbeat-{{ heartbeat_id }} down">{{ heartbeat_name }}</li>
@@ -32,12 +32,14 @@
       </div>
 
       <ul class="clouds">
+        {% set cloud_list = grid['clouds'].keys()|sort %}
+        {# 
         {% if grid_name in config.GRID_CLOUDS %}
           {% set cloud_list = config.GRID_CLOUDS[grid_name]|sort %}
         {% else %}
           {% set cloud_list = grid['clouds'].keys()|sort %}
         {% endif %}
-
+        #}
         {% for cloud_name in cloud_list %}
           {% set enabled = grid['clouds'][cloud_name]['enabled'] %}
           {% set quota = grid['clouds'][cloud_name]['quota'] or '-' %}

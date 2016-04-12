@@ -1,0 +1,24 @@
+static_path: /usr/share/cmon/static
+templates_path: /usr/share/cmon/templates
+
+log_file: /var/log/cmon.log
+log_level: DEBUG
+
+graphite:
+  server: localhost
+  web_port: 80
+  pickle_port: 2004
+
+rabbitmq:
+  server: localhost
+  port: 5672
+  vhost: /sensu
+  user: sensu
+  secret: SENSU_RABBITMQ_SECRET
+  exchange: cmon
+  queue: cmon
+
+mongodb:
+  server: localhost
+  port: 27017
+  db: cmon

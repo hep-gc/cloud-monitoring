@@ -1,4 +1,4 @@
-# Cloud Monitor
+# C'mon: Monitor your clouds
 
 A simple Flask application for monitoring compute clouds that run Cloud
 Scheduler and HTCondor and push monitoring data to Graphite. Cloud Monitor polls
