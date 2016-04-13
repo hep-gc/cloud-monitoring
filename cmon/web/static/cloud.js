@@ -144,7 +144,7 @@ var CloudMonitor = {
             $cloud.find('.idle-vms').text(count);
           });
 
-          $.each(cloud.vms, function(vmtype, vms) {
+          $.each(cloud.vmtypes, function(vmtype, vms) {
             var $cloud = $grid.find('.cloud-' + cloud_name + '.vmtype-' + vmtype);
 
             $.each(vms, function(status, count) {
