@@ -289,9 +289,6 @@ def parse_status(status):
                 else:
                     cloud['slots'][vmtype][slot_name] = 1
 
-                # cloud['mips'] += slot.get('mips', 0)
-                # cloud['kflops'] += slot.get('kflops', 0)
-
     # Process Summary ##########################################################
 
     for cloud_name, cloud in grid['clouds'].iteritems():
@@ -307,7 +304,13 @@ def parse_status(status):
         cloud.pop('vms', None)
         cloud['idle'] = idle
 
+    grid['last_updated'] = datetime.now()
+
     db.grids.replace_one({'_id': grid_name}, grid, upsert=True)
+
+    # Store Raw Data ###########################################################
+
+    db.status.replace_one({'_id': grid_name}, status, upsert=True)
 
     # Mark Inactive VMs ########################################################
 

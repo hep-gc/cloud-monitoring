@@ -6,6 +6,7 @@ from elasticsearch import Elasticsearch
 from datetime import datetime, timedelta
 from flask import Flask, make_response, render_template, request
 from pymongo import MongoClient
+from time import strftime
 
 from graphite import query, metrics_to_dict, path_to_name
 
@@ -188,6 +189,7 @@ def get_summary(db):
 
     for grid in cursor:
         grids[grid['_id']] = grid
+        grids[grid['_id']]['last_updated'] = grids[grid['_id']]['last_updated'].strftime('%H:%M:%S %d-%b')
 
     return grids
 
