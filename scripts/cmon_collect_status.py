@@ -62,6 +62,9 @@ for condor_job in condor_jobs:
         'accounting_group': condor_job.get('AccountingGroup'),
         'queue_date': condor_job.get('QDate'),
         'status_time': condor_job.get('EnteredCurrentStatus'),
+        'remote_host': None,
+        'last_remote_host': None,
+        'last_status': None,
     }
 
     if 'RemoteHost' in condor_job:
@@ -87,7 +90,7 @@ payload = {
     'grid': GRID_NAME,
     'clouds': clouds,
     'jobs': jobs,
-    'slots': slots
+    'slots': slots,
 }
 payload = json.dumps(payload)
 
@@ -95,11 +98,11 @@ creds = pika.PlainCredentials(RMQ_USER, RMQ_SECRET)
 params = pika.ConnectionParameters(RMQ_SERVER, RMQ_PORT, RMQ_VHOST, creds)
 rmq = pika.BlockingConnection(params)
 
-props = pika.BasicProperties(delivery_mode = 2)
+props = pika.BasicProperties(delivery_mode=2)
 
 channel = rmq.channel()
-channel.exchange_declare(exchange='status', exchange_type='fanout')
-channel.basic_publish(exchange='status', routing_key='', body=payload, properties=props)
+channel.exchange_declare(exchange='cmon', exchange_type='fanout')
+channel.basic_publish(exchange='cmon', routing_key='', body=payload, properties=props)
 
 rmq.close()
 
