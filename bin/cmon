@@ -3,18 +3,390 @@
 import argparse
 import json
 import logging
+import pickle
 import pika
-from pymongo import MongoClient
 import socket
+import struct
 import sys
+import time
 import yaml
 
-import cmon
-import cmon.status
-
+from datetime import datetime, timedelta
+from pymongo import MongoClient
 
 DEFAULT_CONFIG_FILE = '/etc/cmon/cmon.yml'
 
+CARBON_OTHER_PATH      = 'grids.%s.clouds.%s.%s'
+CARBON_SLOTS_PATH      = 'grids.%s.clouds.%s.slots.%s.%s'
+CARBON_CLOUD_JOBS_PATH = 'grids.%s.clouds.%s.jobs.%s.%s'
+CARBON_IDLE_PATH       = 'grids.%s.clouds.%s.idle.%s'
+CARBON_JOBS_PATH       = 'grids.%s.jobs.%s.%s'
+CARBON_VMTYPE_PATH     = 'grids.%s.clouds.%s.vms.%s.%s'
+
+
+def parse_status(status):
+    grid_name = status['grid']
+    grid = {
+        'clouds': {},
+        'jobs': {
+            'all': {
+                'total': 0,
+                'unexpanded': 0,
+                'idle': 0,
+                'running': 0,
+                'removed': 0,
+                'completed': 0,
+                'held': 0,
+                'error': 0,
+            }
+        },
+    }
+
+    # Fetch Current VMs and Jobs ###############################################
+
+    db_vms = {}
+    cursor = db.vms.find({'grid': grid_name, 'last_updated': {'$gte': datetime.now() - timedelta(hours=1)}})
+    for vm in cursor:
+        db_vms[vm['_id']] = vm
+
+    db_jobs = {}
+    cursor = db.jobs.find({'grid': grid_name, 'last_updated': {'$gte': datetime.now() - timedelta(hours=1)}})
+    for job in cursor:
+        db_jobs[job['_id']] = job
+
+    active_vms = []
+    active_jobs = []
+
+    # Process Clouds ###########################################################
+
+    for cloud in status['clouds']:
+        cloud_name = cloud['name']
+
+        grid['clouds'][cloud_name] = {
+            'enabled': cloud['enabled'],
+            'quota':   cloud['max_slots'],
+            'vms':     {},
+            'slots':   {},
+            'jobs': {
+                'all': {
+                    'total': 0,
+                    'unexpanded': 0,
+                    'idle': 0,
+                    'running': 0,
+                    'removed': 0,
+                    'completed': 0,
+                    'held': 0,
+                    'error': 0,
+                }
+            },
+            'vmtypes': {},
+            'mips':    0,
+            'kflops':  0,
+        }
+
+        for vm in cloud['vms']:
+            vm_id = vm['hostname']
+
+            # Ignore VMs without a hostname
+            if not vm_id:
+                continue
+
+            active_vms.append(vm_id)
+
+            # Find or create a document for this VM
+            db_vm = db_vms.get(vm_id)
+            if db_vm:
+                db_vm_status = db_vm['status']
+                vm_doc = db_vm
+            else:
+                vm_doc = {
+                    '_id': vm_id,
+                    'first_updated': datetime.now(),
+                    'grid': grid_name,
+                    'cloud': cloud_name,
+                    'hostname': vm['hostname'],
+                    'id': vm['id'],
+                    'type': vm['vmtype'],
+                    'alt_hostname': vm['alt_hostname'],
+                    'initialize_time': datetime.fromtimestamp(vm['initialize_time']),
+                }
+
+            vm_doc['last_updated'] = datetime.now()
+
+            vm_status = vm['status'].lower()
+            if vm['override_status']:
+                vm_status = vm['override_status'].lower()
+
+            vm_doc['status'] = vm_status
+            
+            if db_vm:
+                vm_status_history = db_vm.get('status_history', [])
+                if vm_status != db_vm_status:
+                    print '%s:%s:%s %s -> %s' % (grid_name, cloud_name, vm_id, db_vm_status, vm_status)
+                    vm_status_history.append([datetime.now(), vm_status])
+            else:
+                print '%s:%s:%s %s' % (grid_name, cloud_name, vm_id, vm_status)
+                vm_status_history = [[datetime.now(), vm_status]]
+
+            vm_doc['status_history'] = vm_status_history
+
+            db.vms.replace_one({'_id': vm_id}, vm_doc, upsert=True)
+
+            if vm['vmtype'] not in grid['clouds'][cloud_name]['vmtypes']:
+                grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']] = {
+                    'total':    0,
+                    'starting': 0,
+                    'running':  0,
+                    'retiring': 0,
+                    'error':    0,
+                    'shutdown': 0,
+                }
+
+            grid['clouds'][cloud_name]['vms'][vm['hostname'].split('.')[0]] = {
+                'status': vm_status,
+                'vmtype': vm['vmtype'],
+                'count':  0,
+            }
+
+            grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total'] += 1
+            grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']][vm_status] += 1
+
+        cloud_id = '.'.join((grid_name, cloud_name))
+        cloud_doc = {
+            '_id': cloud_id,
+            'grid': grid_name,
+            'cloud': cloud_name,
+            'type': cloud['cloud_type'],
+            'enabled': cloud['enabled'],
+            'quota': cloud['max_slots'],
+        }
+        
+        db.clouds.replace_one({'_id': cloud_id}, cloud_doc, upsert=True)
+
+    # Process Jobs #############################################################
+
+    for job in status['jobs']:
+        job_id = job['id']
+        job_host = job.get('remote_host')
+        job_last_host = job.get('last_remote_host')
+
+        active_jobs.append(job_id)
+
+        db_job = db_jobs.get(job_id)
+        if db_job:
+            db_job_status = db_job['status']
+            db_job_host = db_job.get('host')
+            job_doc = db_job
+        else:
+            job_doc = {
+                '_id': job_id,
+                'first_updated': datetime.now(),
+                'grid': grid_name,
+                'queue_date': datetime.fromtimestamp(job['queue_date'])
+            }
+
+        job_doc['last_updated'] = datetime.now()
+
+        job_doc['status'] = job['status']
+        job_doc['last_host'] = job_last_host
+        job_doc['host'] = job_host
+
+        if job_host or job_last_host:
+            if job_host and job_host in db_vms:
+                job_doc['cloud'] = db_vms[job_host]['cloud']
+            elif job_last_host and job_last_host in db_vms:
+                job_doc['cloud'] = db_vms[job_last_host]['cloud']
+        else:
+            if not db_job or not db_job.get('cloud'):
+                job_doc['cloud'] = None
+
+        if db_job:
+            job_status_history = db_job.get('status_history', [])
+            job_host_history = db_job.get('host_history', [])
+
+            if job['status'] != db_job_status:
+                print '%s:%s %s -> %s' % (grid_name, job_id, db_job_status, job['status'])
+                job_status_history.append([datetime.now(), job['status']])
+
+            if job_host != db_job_host:
+                print '%s:%s %s -> %s' % (grid_name, job_id, db_job_host, job_host)
+                job_host_history.append([datetime.now(), job_host])
+        else:
+            print '%s:%s %s %s' % (grid_name, job_id, job['status'], job_host)
+            job_status_history = [[datetime.now(), job['status']]]
+            job_host_history = [[datetime.now(), job_host]]
+
+        job_doc['status_history'] = job_status_history
+        job_doc['host_history'] = job_host_history
+
+        job_type = None
+
+        if 'target_clouds' in job:
+            if job['target_clouds'] == 'IAAS':
+                job_type = '1_Core'
+            elif job['target_clouds'] == 'IAAS_MCORE':
+                job_type = '8_Core'
+            elif job['target_clouds'] == 'Alberta':
+                job_type = 'Alberta'
+            elif job['target_clouds'] == 'CERNClouds':
+                if job['accounting_group'] == 'group_mcore':
+                    job_type = 'MCore'
+                elif job['accounting_group'] == 'group_himem':
+                    job_type = 'Himem'
+                elif job['accounting_group'] == 'group_analysis':
+                    job_type = 'Analy'
+            elif job['target_clouds'] == 'cern-preservation':
+                job_type = 'DPHEP'
+
+        job_doc['type'] = job_type
+
+        db.jobs.replace_one({'_id': job_id}, job_doc, upsert=True)
+
+        grid['jobs']['all']['total'] += 1
+        grid['jobs']['all'][job['status']] += 1
+
+        if job_type:
+            if job_type not in grid['jobs']:
+                grid['jobs'][job_type] = {
+                    'unexpanded': 0,
+                    'idle': 0,
+                    'running': 0,
+                    'removed': 0,
+                    'completed': 0,
+                    'held': 0,
+                    'error': 0,
+                }
+                grid['jobs'][job_type]['total'] = 0
+
+            grid['jobs'][job_type]['total'] += 1
+            grid['jobs'][job_type][job['status']] += 1
+
+        if job_doc['cloud']:
+            grid['clouds'][job_doc['cloud']]['jobs']['all']['total'] += 1
+            grid['clouds'][job_doc['cloud']]['jobs']['all'][job['status']] += 1
+
+    # Process Slots ############################################################
+
+    for slot in status['slots']:
+        (slot_name, machine) = slot['name'].split('@')
+
+        if '_' not in slot_name:
+            continue
+
+        machine = machine.split('.')[0]
+
+        for cloud_name, cloud in grid['clouds'].iteritems():
+            if machine in cloud['vms']:
+                vmtype = cloud['vms'][machine]['vmtype']
+
+                cloud['vms'][machine]['count'] += 1
+
+                if vmtype not in cloud['slots']:
+                    cloud['slots'][vmtype] = {}
+
+                if slot_name in cloud['slots'][vmtype]:
+                    cloud['slots'][vmtype][slot_name] += 1
+                else:
+                    cloud['slots'][vmtype][slot_name] = 1
+
+                cloud['mips'] += slot.get('mips', 0)
+                cloud['kflops'] += slot.get('kflops', 0)
+
+    # Process Summary ##########################################################
+
+    for cloud_name, cloud in grid['clouds'].iteritems():
+        idle = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
+        idle['total'] = 0
+
+        if len(cloud['vms']):
+            for vm_id, vm in cloud['vms'].iteritems():
+                if vm['status'] == 'running' and vm['count'] == 0:
+                    idle['total'] += 1
+                    idle[vm['vmtype']] += 1
+
+        cloud.pop('vms', None)
+        cloud['idle'] = idle
+
+    # Mark Inactive VMs ########################################################
+
+    for vm_id, db_vm in db_vms.iteritems():
+        if vm_id not in active_vms and db_vm['status'] != 'gone':
+            vm_doc = db_vm
+            vm_doc['status'] = 'gone'
+            vm_doc['status_history'].append([datetime.now(), 'gone'])
+
+            print '%s:%s:%s %s' % (grid_name, db_vm['cloud'], vm_id, 'gone')
+            db.vms.replace_one({'_id': vm_id}, vm_doc, upsert=True)
+
+    # Mark Inactive Jobs #######################################################
+
+    for job_id, db_job in db_jobs.iteritems():
+        if job_id not in active_jobs and db_job['status'] != 'gone':
+            job_doc = db_job
+            job_doc['status'] = 'gone'
+            job_doc['status_history'].append([datetime.now(), 'gone'])
+
+            print '%s:%s %s' % (grid_name, job_id, 'gone')
+            db.jobs.replace_one({'_id': job_id}, job_doc, upsert=True)
+
+    # Update Summary Database ##################################################
+
+    db.grids.replace_one({'_id': grid_name}, grid, upsert=True)
+
+    # Update Graphite ##########################################################
+
+    metrics = {}
+    timestamp = int(time.time())
+
+    for cloud_name, cloud in grid['clouds'].iteritems():
+        for metric in ['enabled', 'quota', 'mips', 'kflops']:
+            path = CARBON_OTHER_PATH % (grid_name, cloud_name, metric)
+            metrics[path] = cloud[metric]
+
+        for vmtype, slots in cloud['slots'].iteritems():
+            for slot, count in slots.iteritems():
+                path = CARBON_SLOTS_PATH % (grid_name, cloud_name, vmtype, slot)
+                metrics[path] = count
+
+        for vmtype, count in cloud['idle'].iteritems():
+            path = CARBON_IDLE_PATH % (grid_name, cloud_name, vmtype)
+            metrics[path] = count
+
+        for vmtype, statuses in cloud['vmtypes'].iteritems():
+            for status, count in statuses.iteritems():
+                path = CARBON_VMTYPE_PATH % (grid_name, cloud_name, vmtype, status)
+                metrics[path] = count
+
+        for jobtype, statuses in cloud['jobs'].iteritems():
+            for status, count in statuses.iteritems():
+                path = CARBON_CLOUD_JOBS_PATH % (grid_name, cloud_name, jobtype, status)
+                metrics[path] = count
+
+    for jobtype, statuses in grid['jobs'].iteritems():
+        for status, count in statuses.iteritems():
+            path = CARBON_JOBS_PATH % (grid_name, jobtype, status)
+            metrics[path] = count
+
+    graphite_metrics = []
+    for path, count in metrics.iteritems():
+        graphite_metrics.append((path, (timestamp, count)))
+
+    try:
+        sock = socket.socket()
+        sock.connect((config['graphite']['server'], config['graphite']['pickle_port']))
+    except socket.error:
+        raise SystemExit("Couldn't connect to {} on port {}, is carbon-cache.py running?".format(config['graphite']['server'], config['graphite']['pickle_port']))
+
+    package = pickle.dumps(graphite_metrics, 1)
+    length  = struct.pack('!L', len(package))
+
+    print "[%s] %d metrics sent" % (time.strftime('%Y-%m-%d %H:%M:%S'), len(graphite_metrics))
+
+    sock.sendall(length + package)
+    sock.close()
+
+
+# Configure C'mon ##############################################################
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,24 +398,27 @@ args = parser.parse_args()
 with open(args.config_file, 'r') as config_file:
     config = yaml.load(config_file)
 
+# Connect to DB and RabbitMQ ###################################################
+
 db = MongoClient(config['mongodb']['server'], config['mongodb']['port'])[config['mongodb']['db']]
 
 creds = pika.PlainCredentials(config['rabbitmq']['user'], config['rabbitmq']['secret'])
 params = pika.ConnectionParameters(config['rabbitmq']['server'], config['rabbitmq']['port'], config['rabbitmq']['vhost'], creds)
 rmq = pika.BlockingConnection(params)
 
-channel = rmq.channel()
-
 exchange = config['rabbitmq']['exchange']
-channel.exchange_declare(exchange=exchange, exchange_type='fanout')
-
 queue = config['rabbitmq']['queue']
+
+channel = rmq.channel()
+channel.exchange_declare(exchange=exchange, exchange_type='fanout')
 channel.queue_declare(queue=queue, durable=True)
 channel.queue_bind(exchange=exchange, queue=queue)
 
+# Start Consuming Status #######################################################
+
 try:
     def callback(ch, method, props, body):
-        cmon.status.parse(json.loads(body), db)
+        parse_status(json.loads(body))
 
         # Acknowledge message to prevent re-queueing
         ch.basic_ack(delivery_tag=method.delivery_tag)
