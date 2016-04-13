@@ -10,9 +10,9 @@ import struct
 import sys
 import time
 import yaml
-
 from datetime import datetime, timedelta
 from pymongo import MongoClient
+
 
 DEFAULT_CONFIG_FILE = '/etc/cmon/cmon.yml'
 
@@ -63,7 +63,7 @@ def parse_status(status):
         cloud_name = cloud['name']
 
         grid['clouds'][cloud_name] = {
-            'enabled': cloud['enabled'],
+            'enabled': 1 if cloud['enabled'] else 0,
             'quota':   cloud['max_slots'],
             'vms':     {},
             'slots':   {},
@@ -289,8 +289,8 @@ def parse_status(status):
                 else:
                     cloud['slots'][vmtype][slot_name] = 1
 
-                cloud['mips'] += slot.get('mips', 0)
-                cloud['kflops'] += slot.get('kflops', 0)
+                # cloud['mips'] += slot.get('mips', 0)
+                # cloud['kflops'] += slot.get('kflops', 0)
 
     # Process Summary ##########################################################
 
@@ -306,6 +306,8 @@ def parse_status(status):
 
         cloud.pop('vms', None)
         cloud['idle'] = idle
+
+    db.grids.replace_one({'_id': grid_name}, grid, upsert=True)
 
     # Mark Inactive VMs ########################################################
 
@@ -328,10 +330,6 @@ def parse_status(status):
 
             print '%s:%s %s' % (grid_name, job_id, 'gone')
             db.jobs.replace_one({'_id': job_id}, job_doc, upsert=True)
-
-    # Update Summary Database ##################################################
-
-    db.grids.replace_one({'_id': grid_name}, grid, upsert=True)
 
     # Update Graphite ##########################################################
 
