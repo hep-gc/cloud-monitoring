@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 import argparse
+import os
+import sys
 import yaml
+
+sys.path.insert(0, os.path.abspath('.'))
 
 from cmon.web import app
 
