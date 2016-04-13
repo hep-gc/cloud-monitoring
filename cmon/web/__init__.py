@@ -3,7 +3,7 @@ import os
 import yaml
 from collections import OrderedDict
 from elasticsearch import Elasticsearch
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, make_response, render_template, request
 from pymongo import MongoClient
 
