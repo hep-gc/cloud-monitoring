@@ -127,17 +127,17 @@ var CloudMonitor = {
       $.each(grids, function(grid_name, grid) {
         var $grid = $('.grid-' + grid_name)
 
-        $.each(['cloud_monitor', 'cloud_scheduler', 'condor'], function(_, heartbeat) {
-          var $heartbeat = $grid.find('.heartbeat-' + heartbeat);
+        // $.each(['cloud_monitor', 'cloud_scheduler', 'condor'], function(_, heartbeat) {
+        //   var $heartbeat = $grid.find('.heartbeat-' + heartbeat);
           
-          if (heartbeat in grid.heartbeat && grid.heartbeat[heartbeat] == 1) {
-            $heartbeat.addClass('up');
-            $heartbeat.removeClass('down');
-          } else {
-            $heartbeat.addClass('down');
-            $heartbeat.removeClass('up');
-          }
-        });
+        //   if (heartbeat in grid.heartbeat && grid.heartbeat[heartbeat] == 1) {
+        //     $heartbeat.addClass('up');
+        //     $heartbeat.removeClass('down');
+        //   } else {
+        //     $heartbeat.addClass('down');
+        //     $heartbeat.removeClass('up');
+        //   }
+        // });
 
         $.each(grid.clouds, function(cloud_name, cloud) {
 
