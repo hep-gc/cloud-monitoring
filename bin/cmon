@@ -8,11 +8,11 @@ import pika
 import socket
 import struct
 import sys
-import time
 import yaml
 
 from datetime import datetime, timedelta
 from pymongo import MongoClient
+from time import strftime
 
 
 DEFAULT_CONFIG_FILE = '/etc/cmon/cmon.yml'
@@ -381,7 +381,7 @@ def parse_status(status, timestamp):
     package = pickle.dumps(graphite_metrics, 1)
     length  = struct.pack('!L', len(package))
 
-    print "[%s] %d metrics sent" % (time.strftime('%Y-%m-%d %H:%M:%S'), len(graphite_metrics))
+    print "[%s] %d metrics sent" % (strftime('%Y-%m-%d %H:%M:%S'), len(graphite_metrics))
 
     sock.sendall(length + package)
     sock.close()
