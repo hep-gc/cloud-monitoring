@@ -79,7 +79,7 @@ def cloud(grid_name, cloud_name):
     if 'refresh' in request.values:
         return render_cloud(grid_name, cloud_name)
     else:
-        return render_template('pages/cloud.html.j2', cloud=get_cloud(grid_name, cloud_name))
+        return render_template('pages/cloud.html.j2', cloud=get_cloud(grid_name, cloud_name), links=config['links'], date_ranges=DATE_RANGES)
 
 
 @app.route('/clouds/<grid_name>/<cloud_name>/vms/<vm_hostname>', methods=['GET', 'POST'])
@@ -89,7 +89,7 @@ def vm(grid_name, cloud_name, vm_hostname):
     else:
         vm = get_vm(grid_name, vm_hostname)
         logs = get_logs('"{0}" "{1}"'.format(vm['id'], vm['hostname']))
-        return render_template('pages/vm.html.j2', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), vm=vm, logs=logs, date_ranges=DATE_RANGES)
+        return render_template('pages/vm.html.j2', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), vm=vm, logs=logs, links=config['links'], date_ranges=DATE_RANGES)
 
 
 @app.route('/clouds/<grid_name>/<cloud_name>/jobs/<job_id>', methods=['GET', 'POST'])
@@ -99,7 +99,7 @@ def jobs(grid_name, cloud_name, job_id):
     else:
         job = get_job(grid_name, job_id)
         logs = get_logs('"{0}"'.format(job_id))
-        return render_template('pages/job.html.j2', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), job=job, logs=logs, date_ranges=DATE_RANGES)
+        return render_template('pages/job.html.j2', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), job=job, logs=logs, links=config['links'], date_ranges=DATE_RANGES)
 
 
 @app.route('/json', methods=['GET', 'POST'])
