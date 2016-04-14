@@ -24,7 +24,7 @@ CARBON_JOBS_PATH       = 'grids.%s.jobs.%s.%s'
 CARBON_VMTYPE_PATH     = 'grids.%s.clouds.%s.vms.%s.%s'
 
 
-def parse_status(status):
+def parse_status(status, timestamp):
     grid_name = status['grid']
     grid = {
         'clouds': {},
@@ -261,7 +261,7 @@ def parse_status(status):
             grid['jobs'][job_type]['total'] += 1
             grid['jobs'][job_type][job['status']] += 1
 
-        if job_doc['cloud']:
+        if 'cloud' in job_doc and job_doc['cloud']:
             grid['clouds'][job_doc['cloud']]['jobs']['all']['total'] += 1
             grid['clouds'][job_doc['cloud']]['jobs']['all'][job['status']] += 1
 
@@ -337,7 +337,6 @@ def parse_status(status):
     # Update Graphite ##########################################################
 
     metrics = {}
-    timestamp = int(time.time())
 
     for cloud_name, cloud in grid['clouds'].iteritems():
         for metric in ['enabled', 'quota', 'mips', 'kflops']:
@@ -419,7 +418,9 @@ channel.queue_bind(exchange=exchange, queue=queue)
 
 try:
     def callback(ch, method, props, body):
-        parse_status(json.loads(body))
+        parse_status(json.loads(body), timestamp=props.timestamp)
+
+        print props
 
         # Acknowledge message to prevent re-queueing
         ch.basic_ack(delivery_tag=method.delivery_tag)

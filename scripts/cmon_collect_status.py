@@ -4,9 +4,16 @@ import htcondor
 import logging
 import json
 import pika
+import sys
+import time
+
 from socket import gethostname
 from subprocess import Popen, PIPE
-import sys
+
+if sys.version_info <= (2, 6):
+    json.loads = json.read
+    json.dumps = json.write
+
 
 RMQ_SERVER = 'SENSU RABBITMQ SERVER GOES HERE'
 RMQ_PORT = 5672
@@ -16,9 +23,6 @@ RMQ_VHOST = '/sensu'
 
 GRID_NAME = sys.argv[1] if len(sys.argv) > 1 else gethostname()
 
-if sys.version_info <= (2, 6):
-    json.loads = json.read
-    json.dumps = json.write
 
 CONDOR_JOB_STATUSES = {
     0: 'unexpanded',
@@ -29,6 +33,7 @@ CONDOR_JOB_STATUSES = {
     5: 'held',
     6: 'error',
 }
+
 
 # Query Condor to get jobs and slots
 condor_coll   = htcondor.Collector()
@@ -98,7 +103,10 @@ creds = pika.PlainCredentials(RMQ_USER, RMQ_SECRET)
 params = pika.ConnectionParameters(RMQ_SERVER, RMQ_PORT, RMQ_VHOST, creds)
 rmq = pika.BlockingConnection(params)
 
-props = pika.BasicProperties(delivery_mode=2)
+props = pika.BasicProperties(
+    delivery_mode=2,
+    timestamp=int(time.time())
+)
 
 channel = rmq.channel()
 channel.exchange_declare(exchange='cmon', exchange_type='fanout')
