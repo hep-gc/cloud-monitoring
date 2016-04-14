@@ -71,7 +71,7 @@ def index():
     if 'refresh' in request.values:
         return render_grids()
     else:
-        return render_template('pages/index.html.j2', grids=get_grids())
+        return render_template('pages/index.html.j2', grids=get_grids(), links=config['links'])
 
 
 @app.route('/clouds/<grid_name>/<cloud_name>', methods=['GET', 'POST'])

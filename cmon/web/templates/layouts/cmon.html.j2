@@ -27,11 +27,9 @@
       </div>
 
       <ul class="nav navbar-nav">
-        <li><a href="#"><span class="glyphicon glyphicon-ok"></span> Sensu</a></li>
-        <li><a href="#"><span class="glyphicon glyphicon-dashboard"></span> Grafana</a></li>
-        <li><a href="#"><span class="glyphicon glyphicon-hdd"></span> Graphite</a></li>
-        <li><a href="#"><span class="glyphicon glyphicon-signal"></span> Ganglia</a></li>
-        <li><a href="#"><span class="glyphicon glyphicon-list"></span> Kibana</a></li>
+        {% for link in links %}
+          <li><a href="{{ link.url }}" target="_blank"><span class="glyphicon glyphicon-{{ link.icon }}"></span> {{ link.name }}</a></li>
+        {% endfor %}
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li class="dropdown">

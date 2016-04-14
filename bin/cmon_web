@@ -14,4 +14,3 @@ sys.path.insert(0, os.path.abspath('.'))
 from cmon.web import app
 
 app.run(debug=True, host=args.listen, port=args.port)
-

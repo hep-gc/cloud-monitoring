@@ -22,3 +22,20 @@ mongodb:
   server: localhost
   port: 27017
   db: cmon
+
+links:
+  - name: Sensu
+    url: http://<HOSTNAME>:3001
+    icon: ok
+  - name: Grafana
+    url: http://<HOSTNAME>:3000
+    icon: dashboard
+  - name: Graphite
+    url: http://<HOSTNAME>:81
+    icon: hdd
+  - name: Ganglia
+    url: http://<HOSTNAME>:81/ganglia
+    icon: signal
+  - name: Kibana
+    url: http://<HOSTNAME>:5601
+    icon: list
