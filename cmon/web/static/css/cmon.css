@@ -29,7 +29,12 @@ p .label { margin-right: 5px; }
 .metric:hover { cursor: pointer; background: #f9f9f9; color: #000; -webkit-user-select: none; -moz-user-select: none; }
 .plotted, .plotted:hover { background: #ffd !important; }
 
-.plot { display: none; position: relative; border-bottom: solid 2px #ccc; background: url('/static/loading.gif') no-repeat center center; }
-
-
+.plot { display: none; position: relative; border-bottom: solid 2px #ccc; background: url('/static/img/loading.gif') no-repeat center center; }
 .btn-close { position: absolute; top: 0; right: 0; }
+
+.select-range {}
+.select-range ul { padding: 0; list-style: none; }
+.select-range a { color: #aaa; text-decoration: none; }
+.select-range a:hover { color: #000; }
+.select-range .selected, .select-range .selected:hover { font-weight: bold; color: #5cb85c; }
+

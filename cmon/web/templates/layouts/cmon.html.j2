@@ -33,18 +33,41 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Last 1 hour <span class="caret"></span></a>
-          <ul class="dropdown-menu">
-            <li><a href="#">Sensu</a></li>
-            <li><a href="#">Grafana</a></li>
-            <li><a href="#">Kibana</a></li>
-            <li role="separator" class="divider"></li>
-            <li><a href="#">Graphite</a></li>
-            <li><a href="#">Ganglia</a></li>
-          </ul>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"><span id="selected-range">Last 1 hour</span> <span class="caret"></span></a>
+          <div class="dropdown-menu">
+            <div class="container-fluid" style="width: 800px;">
+              <div class="row">
+                <div class="col-sm-5">
+                  <form class="enter-range">
+                    <h3>Enter Range</h3>
+                    <div class="form-group">
+                      <label for="date-range-from">From</label>
+                      <input type="from" class="form-control" id="date-range-from" placeholder="From" value="-1h">
+                    </div>
+                    <div class="form-group">
+                      <label for="date-range-end">End</label>
+                      <input type="end" class="form-control" id="date-range-end" placeholder="End" value="now">
+                    </div>
+                    <p><button id="apply-date-range" class="btn btn-default">Apply</button></p>
+                  </form>
+                </div>
+                <div class="col-sm-7">
+                  <div class="select-range">
+                    <h3>Quick Ranges</h3>
+                    {% for ranges in date_ranges %}
+                      <ul class="col-sm-4">
+                        {% for text, range in ranges.iteritems(): %}
+                          <li><a class="date-range {{ 'selected' if range[0] == '-1h' }}" data-from="{{ range[0] }}" data-end="{{ range[1] }}" href="">{{ text }}</a></li>
+                        {% endfor %}
+                      </ul>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </li>
-        <li class="disabled"><a href=""><span class="glyphicon glyphicon-download"></span> Export</a></li>
-        <li><a id="" href="#"><span class="glyphicon glyphicon-cog"></span> Settings</a></li>
+        <li class="disabled"><a href="#" id="export"><span class="glyphicon glyphicon-download"></span> Export</a></li>
         <li><a id="refresh" href="#"><span class="glyphicon glyphicon-refresh"></span> Refresh <span id="refresh-timer" class="badge">60</span></a></li>
       </ul>
     </div>

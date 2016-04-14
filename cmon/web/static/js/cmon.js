@@ -36,9 +36,9 @@ var CloudMonitor = {
       $(this).toggleClass('plotted');
 
       if (CloudMonitor.Plot.traces.length > 0) {
-        $('#export').removeClass('disabled');
+        $('#export').parent().removeClass('disabled');
       } else {
-        $('#export').addClass('disabled');
+        $('#export').parent().addClass('disabled');
       }
     });
 
@@ -46,11 +46,6 @@ var CloudMonitor = {
       e.preventDefault();
       CloudMonitor.refresh();
       CloudMonitor.Plot.refresh();
-    });
-
-    $('#select-range').on('click', function(e) {
-      e.preventDefault();
-      $('#range').toggle();
     });
 
     $('#set-options').on('click', function(e) {
@@ -76,7 +71,7 @@ var CloudMonitor = {
       $('a.date-range').removeClass('selected');
       $(this).addClass('selected');
 
-      $('#select-range').text($(this).text())
+      $('#selected-range').text($(this).text())
 
       CloudMonitor.Plot.refresh();
     });
@@ -173,6 +168,7 @@ CloudMonitor.Plot = {
       e.preventDefault();
       CloudMonitor.Plot.hide();
       $('.metric').removeClass('plotted');
+      $('#export').parent().addClass('disabled');
     });
 
     $(window).on('resize', function() {
