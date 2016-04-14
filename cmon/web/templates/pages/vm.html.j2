@@ -1,0 +1,13 @@
+{% extends "layouts/cmon.html.j2" %}
+
+{% block breadcrumb %}
+    <li><a href="/"><span class="glyphicon glyphicon-home"></span> Summary</a></li>
+    <li class="active">{{ vm.grid }}</li>
+    <li><a href="{{ back }}">{{ vm.cloud }}</a></li>
+    <li class="active">VMs</li>
+    <li class="active">{{ vm.hostname }}</li>
+{% endblock %}
+
+{% block content %}
+  {% include 'partials/vm.html.j2' %}
+{% endblock %}

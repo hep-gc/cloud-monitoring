@@ -1,6 +1,5 @@
-<div class="table" style="width: 50%">
-  <h3>Logs</h3>
-  <table class="logs">
+{% if logs | count %}
+  <table class="table logs">
     <tbody>
       {% for log in logs %}
         <tr class="log-info">
@@ -14,4 +13,8 @@
       {% endfor %}
     </tbody>
   </table>
-</div>
+{% else %}
+  <div class="panel-body">
+    <span class="text-muted">No logs were found. Are Filebeat and Logstash running?</span>
+  </div>
+{% endif %}

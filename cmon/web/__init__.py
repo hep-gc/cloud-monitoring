@@ -56,12 +56,6 @@ SUMMARY_METRICS = [
     'grids.*.jobs.*.*',
 ]
 
-HEARTBEATS = {
-    'cloud_monitor': 'Monitor',
-    'cloud_scheduler': 'CS',
-    'condor': 'HTCondor',
-}
-
 
 app = Flask(__name__)
 
@@ -71,29 +65,41 @@ with open(os.environ.get('CMON_CONFIG_FILE', DEFAULT_CONFIG_FILE), 'r') as confi
 db = MongoClient(config['mongodb']['server'], config['mongodb']['port'])[config['mongodb']['db']]
 es = Elasticsearch()
 
-@app.route('/')
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html', grids=get_summary(db), config=config, heartbeats=HEARTBEATS, date_ranges=DATE_RANGES)
+    if 'refresh' in request.values:
+        return render_grids()
+    else:
+        return render_template('pages/index.html.j2', grids=get_grids())
 
 
-@app.route('/clouds/<grid_name>/<cloud_name>')
+@app.route('/clouds/<grid_name>/<cloud_name>', methods=['GET', 'POST'])
 def cloud(grid_name, cloud_name):
-    cloud = get_cloud(db, grid_name, cloud_name)
-    return render_template('cloud.html', cloud=cloud)
+    if 'refresh' in request.values:
+        return render_cloud(grid_name, cloud_name)
+    else:
+        return render_template('pages/cloud.html.j2', cloud=get_cloud(grid_name, cloud_name))
 
 
-@app.route('/clouds/<grid_name>/<cloud_name>/vms/<vm_hostname>')
+@app.route('/clouds/<grid_name>/<cloud_name>/vms/<vm_hostname>', methods=['GET', 'POST'])
 def vm(grid_name, cloud_name, vm_hostname):
-    vm = get_vm(db, grid_name, vm_hostname)
-    logs = get_logs(es, '"{0}" "{1}"'.format(vm['id'], vm['hostname']))
-    return render_template('vm.html', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), vm=vm, logs=logs)
+    if 'refresh' in request.values:
+        return render_vm(grid_name, vm_hostname)
+    else:
+        vm = get_vm(grid_name, vm_hostname)
+        logs = get_logs('"{0}" "{1}"'.format(vm['id'], vm['hostname']))
+        return render_template('pages/vm.html.j2', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), vm=vm, logs=logs)
 
 
-@app.route('/clouds/<grid_name>/<cloud_name>/jobs/<job_id>')
+@app.route('/clouds/<grid_name>/<cloud_name>/jobs/<job_id>', methods=['GET', 'POST'])
 def jobs(grid_name, cloud_name, job_id):
-    job = get_job(db, grid_name, job_id)
-    logs = get_logs(es, '"{0}"'.format(job_id))
-    return render_template('job.html', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), job=job, logs=logs)
+    if 'refresh' in request.values:
+        return render_job(grid_name, job_id)
+    else:
+        job = get_job(grid_name, job_id)
+        logs = get_logs('"{0}"'.format(job_id))
+        return render_template('pages/job.html.j2', back='/clouds/{0}/{1}'.format(grid_name, cloud_name), job=job, logs=logs)
 
 
 @app.route('/json', methods=['GET', 'POST'])
@@ -111,8 +117,7 @@ def data():
 
         return json.dumps(traces, indent=4, separators=(',', ': '))
     else:
-        return json.dumps(get_summary(db), indent=4, separators=(',', ': '))
-
+        return '{}'
 
 @app.route('/export', methods=['GET', 'POST'])
 def export():
@@ -146,6 +151,149 @@ def export():
         return response
     else:
         return 'No Data'
+
+
+def render_grids():
+    return render_template('partials/grids.html.j2', grids=get_grids())
+
+
+def render_cloud(grid_name, cloud_name):
+    return render_template('partials/cloud.html.j2', cloud=get_cloud(grid_name, cloud_name))
+
+
+def render_vm(grid_name, vm_hostname):
+    vm = get_vm(grid_name, vm_hostname)
+    logs = get_logs('"{0}" "{1}"'.format(vm['id'], vm['hostname']))
+
+    return render_template('partials/vm.html.j2', vm=vm, logs=logs)
+
+
+def render_job(grid_name, job_id):
+    job = get_job(grid_name, job_id)
+    logs = get_logs('"{0}"'.format(job_id))
+
+    return render_template('partials/job.html.j2', job=job, logs=logs)
+
+
+def get_grids():
+    grids = {}
+    cursor = db.grids.find()
+    for grid in cursor:
+        grids[grid['_id']] = grid
+        grids[grid['_id']]['last_updated'] = grids[grid['_id']]['last_updated'].strftime('%H:%M:%S %d-%b')
+    return grids
+
+
+def get_cloud(grid_name, cloud_name):
+    """Query status database for 
+    """
+    cursor = db.vms.find({
+        'grid': grid_name,
+        'cloud': cloud_name,
+        'last_updated': {'$gte': datetime.now() - timedelta(hours=1)}
+    })
+    vms = []
+    for vm in cursor.sort('status', -1):
+        vms.append(vm)
+
+    cursor = db.jobs.find({
+        'grid': grid_name,
+        'cloud': cloud_name,
+        'last_updated': {'$gte': datetime.now() - timedelta(hours=1)}
+    })
+    jobs = []
+    for job in cursor.sort('queue_date', 1):
+        jobs.append(job)
+
+    cloud = {
+        'grid': grid_name,
+        'name': cloud_name,
+        'vms': vms,
+        'jobs': jobs,
+    }
+    return cloud
+
+
+def get_vm(grid_name, vm_hostname):
+    vm = db.vms.find_one({
+        'grid': grid_name,
+        'hostname': vm_hostname,
+    })
+
+    cursor = db.jobs.find({
+        '$and': [
+            { 'grid': grid_name },
+            {
+                '$or': [
+                    { 'host': vm_hostname },
+                    { '$and': [ {'last_host': vm_hostname}, {'host': None} ] },
+                ]
+            }
+        ]
+    })
+    jobs = []
+    for job in cursor.sort('status', -1):
+        jobs.append(job)
+
+    vm['jobs'] = jobs
+
+    return vm
+
+
+def get_job(grid_name, job_id):
+    job = db.jobs.find_one({
+        'grid': grid_name,
+        '_id': job_id,
+    })
+
+    return job
+
+
+def get_logs(terms):
+    response = es.search(index='logstash-*', size=200, body={
+        'query': {
+            'filtered': {
+                'query': {
+                    'query_string': {
+                        'analyze_wildcard': True,
+                        'query': terms
+                    }
+                }
+            }
+        },
+        'sort': {
+            '@timestamp': 'desc'
+        }
+    })
+
+    return response['hits']['hits']
+
+
+def get_history(targets, start='-1h', end='now'):
+    """Retrieve the time series data for one or more metrics.
+
+    Args:
+        targets (str|List[str]): Graphite path, or list of paths.
+        start (Optional[str]): Start of date range. Defaults to one hour ago.
+        end (Optional[str]): End of date range. Defaults to now.
+
+    Returns:
+        A list of metric values.
+    """
+
+    metrics = query(targets, start, end)
+
+    try:
+        metrics = json.loads(metrics)[0]['datapoints']
+    except:
+        return []
+
+    # Convert unix timestamps to plot.ly's required date format
+    for metric in metrics:
+        timestamp = datetime.fromtimestamp(metric[1])
+        metric[1] = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+    return metrics
 
 
 def plotly(metrics=[], name='', color=None):
@@ -182,126 +330,16 @@ def date_range():
 
     return (range_from, range_end)
 
-def get_summary(db):
-    grids = {}
 
-    cursor = db.grids.find()
+@app.template_filter('status_label')
+def status_label(status):
+    if status == 'running' or status == 'completed':
+        return 'success'
+    elif status == 'gone':
+        return 'disabled'
+    elif status == 'held':
+        return 'warning'
+    elif status == 'error':
+        return 'danger'
 
-    for grid in cursor:
-        grids[grid['_id']] = grid
-        grids[grid['_id']]['last_updated'] = grids[grid['_id']]['last_updated'].strftime('%H:%M:%S %d-%b')
-
-    return grids
-
-
-def get_cloud(db, grid_name, cloud_name):
-    """Query status database for 
-    """
-    cursor = db.vms.find({
-        'grid': grid_name,
-        'cloud': cloud_name,
-        'last_updated': {'$gte': datetime.now() - timedelta(hours=1)}
-    })
-    vms = []
-    for vm in cursor.sort('status', -1):
-        vms.append(vm)
-
-    cursor = db.jobs.find({
-        'grid': grid_name,
-        'cloud': cloud_name,
-        'last_updated': {'$gte': datetime.now() - timedelta(hours=1)}
-    })
-    jobs = []
-    for job in cursor.sort('queue_date', 1):
-        jobs.append(job)
-
-    cloud = {
-        'grid': grid_name,
-        'name': cloud_name,
-        'vms': vms,
-        'jobs': jobs,
-    }
-    return cloud
-
-
-def get_vm(db, grid_name, vm_hostname):
-    vm = db.vms.find_one({
-        'grid': grid_name,
-        'hostname': vm_hostname,
-    })
-
-    cursor = db.jobs.find({
-        '$and': [
-            { 'grid': grid_name },
-            {
-                '$or': [
-                    { 'host': vm_hostname },
-                    { '$and': [ {'last_host': vm_hostname}, {'host': None} ] },
-                ]
-            }
-        ]
-    })
-    jobs = []
-    for job in cursor.sort('status', -1):
-        jobs.append(job)
-
-    vm['jobs'] = jobs
-
-    return vm
-
-
-def get_job(db, grid_name, job_id):
-    job = db.jobs.find_one({
-        'grid': grid_name,
-        '_id': job_id,
-    })
-
-    return job
-
-
-def get_logs(es, terms):
-    response = es.search(index='logstash-*', size=200, body={
-        'query': {
-            'filtered': {
-                'query': {
-                    'query_string': {
-                        'analyze_wildcard': True,
-                        'query': terms
-                    }
-                }
-            }
-        },
-        'sort': {
-            '@timestamp': 'desc'
-        }
-    })
-
-    return response['hits']['hits']
-
-
-def get_history(targets, start='-1h', end='now'):
-    """Retrieve the time series data for one or more metrics.
-
-    Args:
-        targets (str|List[str]): Graphite path, or list of paths.
-        start (Optional[str]): Start of date range. Defaults to one hour ago.
-        end (Optional[str]): End of date range. Defaults to now.
-
-    Returns:
-        A list of metric values.
-    """
-
-    print targets
-    metrics = query(targets, start, end)
-
-    try:
-        metrics = json.loads(metrics)[0]['datapoints']
-    except:
-        return []
-
-    # Convert unix timestamps to plot.ly's required date format
-    for metric in metrics:
-        timestamp = datetime.fromtimestamp(metric[1])
-        metric[1] = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-    return metrics
+    return 'info'

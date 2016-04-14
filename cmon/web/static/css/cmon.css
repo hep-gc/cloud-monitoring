@@ -1,0 +1,35 @@
+.navbar { margin-bottom: 0; }
+.breadcrumb { margin: 0 -15px 20px; border-radius: 0; }
+
+.count { width: 60px; text-align: center; font-weight: bold; }
+.count.narrow { width: 35px; }
+.count.zero { color: #bbb; font-weight: normal; }
+
+td.count { color: #666; font-family: monospace; font-size: 18px; }
+td.running { color: #5cb85c; }
+td.idle-vms { color: #f0ad4e; }
+td.held, td.error, td.held-jobs, td.lost-vms { color: #d9534f; }
+
+tr.gone, tr.gone a { color: #aaa; }
+
+.table>tbody>tr>td { line-height: 1.1; vertical-align: middle; }
+.table>thead>tr>th { border-top: none; font-size: 12px; line-height: 0.9; }
+.table>thead>tr>th.group { border-bottom: none; text-align: center; }
+
+.row h4 { margin-top: 0; }
+
+p .label { margin-right: 5px; }
+.label-disabled { background: #ccc; }
+
+.btn-disabled { color: #ccc; }
+.btn-disabled .badge { background: #ccc; }
+.btn-xs { padding: 0px 3px; }
+.btn-xs .badge { top: -1px; font-size: 11px; line-height: 12px; }
+
+.metric:hover { cursor: pointer; background: #f9f9f9; color: #000; -webkit-user-select: none; -moz-user-select: none; }
+.plotted, .plotted:hover { background: #ffd !important; }
+
+.plot { display: none; position: relative; border-bottom: solid 2px #ccc; background: url('/static/loading.gif') no-repeat center center; }
+
+
+.btn-close { position: absolute; top: 0; right: 0; }

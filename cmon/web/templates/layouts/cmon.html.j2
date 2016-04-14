@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Cloud Monitor</title>
+
+  <!-- jQuery 2.2.0 -->
+  <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+
+  <!-- Plotly.js 1.9.0 -->
+  <script src="https://cdn.plot.ly/plotly-1.9.0.min.js"></script>
+
+  <!-- Bootstrap 3.3.6 -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+  <!-- C'mon -->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/cmon.css') }}">
+  <script src="{{ url_for('static', filename='js/cmon.js') }}"></script>
+
+</head>
+<body>
+  <nav class="navbar navbar-default navbar-static-top navbar-inverse">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="/"><span class="glyphicon glyphicon-cloud-download"></span> Cloud Monitor</a>
+      </div>
+
+      <ul class="nav navbar-nav">
+        <li><a href="#"><span class="glyphicon glyphicon-ok"></span> Sensu</a></li>
+        <li><a href="#"><span class="glyphicon glyphicon-dashboard"></span> Grafana</a></li>
+        <li><a href="#"><span class="glyphicon glyphicon-hdd"></span> Graphite</a></li>
+        <li><a href="#"><span class="glyphicon glyphicon-signal"></span> Ganglia</a></li>
+        <li><a href="#"><span class="glyphicon glyphicon-list"></span> Kibana</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Last 1 hour <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Sensu</a></li>
+            <li><a href="#">Grafana</a></li>
+            <li><a href="#">Kibana</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a href="#">Graphite</a></li>
+            <li><a href="#">Ganglia</a></li>
+          </ul>
+        </li>
+        <li class="disabled"><a href=""><span class="glyphicon glyphicon-download"></span> Export</a></li>
+        <li><a id="" href="#"><span class="glyphicon glyphicon-cog"></span> Settings</a></li>
+        <li><a id="refresh" href="#"><span class="glyphicon glyphicon-refresh"></span> Refresh <span id="refresh-timer" class="badge">60</span></a></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="container-fluid">
+    <ol class="breadcrumb">
+      {% block breadcrumb %}{% endblock %}
+    </ol>
+    <div class="plot" style="display: none;">
+      <div id="plot" style="width: 100%; height: 350px;"></div>
+      <a href="#" id="close-plot" class="btn btn-xs btn-default btn-close">Close Plot <span class="glyphicon glyphicon-remove"></span></a>
+      <div class="loading"></div>
+    </div>
+    <div id="content">{% block content %}{% endblock %}</div>
+  </div>
+</body>
+</html>

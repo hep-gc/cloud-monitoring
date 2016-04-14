@@ -1,0 +1,77 @@
+<div class="row">
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">Status</div>
+      <div class="panel-body">
+        <dl class="dl-horizontal">
+          <dt>ID:</dt>
+          <dd>{{ job._id }}</dd>
+          <dt>Status:</dt>
+          <dd><span class="label label-{{ job.status | status_label }}">{{ job.status }}</span></dd>
+          <dt>Queued:</dt>
+          <dd>{{ job.queue_date.strftime('%H:%M:%S %d-%b') }}</dd>
+          <dt>Updated:</dt>
+          <dd>{{ job.last_updated.strftime('%H:%M:%S %d-%b') }}</dd>
+          <dt>VM:</dt>
+          <dd>
+            {% if job.host %}
+              <a href="/clouds/{{ job.grid }}/{{ job.cloud }}/vms/{{ job.host }}">{{ job.host }}</a>
+            {% else %}
+              &mdash;
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading">Status History</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in job.status_history %}
+            <tr class="{{ row[1] }}">
+              <td>{{ row[0].strftime('%H:%M:%S %d-%b') }}</td>
+              <td><span class="label label-{{ row[1] | status_label }}">{{ row[1] }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading">VM History</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>VM</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in job.host_history %}
+            <tr>
+              <td>{{ row[0].strftime('%H:%M:%S %d-%b') }}</td>
+              <td>
+                {% if row[1] %}
+                  <a href="/clouds/{{ job.grid }}/{{ job.cloud }}/vms/{{ row[1] }}">{{ row[1] }}</a>
+                {% else %}
+                  &mdash;
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">Logs</div>
+      {% include 'partials/logs.html.j2' %}
+    </div>
+  </div>
+</div>

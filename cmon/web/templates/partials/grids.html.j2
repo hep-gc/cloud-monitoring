@@ -1,0 +1,165 @@
+{% set vm_statuses  = ['starting', 'running', 'retiring', 'error'] %}
+{% set job_statuses = ['total', 'idle', 'running', 'completed', 'held'] %}
+
+{% for grid_name in grids|sort %}
+  {% set grid = grids[grid_name] %}
+  
+  <h4>
+    {{ grid_name }}
+    <small>{{ grid['last_updated'] }}</small>
+  </h4>
+
+  <p>
+    {% set cloud_list = grid['clouds'].keys()|sort %}
+    {% for cloud_name in cloud_list %}
+      {% set enabled = grid['clouds'][cloud_name]['enabled']  %}
+      {% set quota = grid['clouds'][cloud_name]['quota'] or '-' %}
+      {% set path  = 'grids.{}.clouds.{}'.format(grid_name, cloud_name) %}
+        <a href="" class="btn btn-xs btn-{{ 'success' if enabled else 'default btn-disabled' }}">
+          {{ cloud_name }}
+          <span class="badge">{{ quota }}</span>
+        </a>
+    {% endfor %}
+  </p>
+
+  <div class="row">
+    <div class="col-md-8">
+      <table class="table table-condensed">
+        <thead>
+          <tr>
+            <th colspan="2" rowspan="2">Cloud</th>
+            <th class="group" colspan="6">CloudScheduler VMs</th>
+            <th class="group">&nbsp;</th>
+            <th class="group" colspan="10">HTCondor Slots</th>
+          </tr>
+          <tr>
+            {% for status in vm_statuses %}
+              <th class="count">{{ status.title() }}</th>
+            {% endfor %}
+
+            <th class="count">Idle</th>
+            <th class="count">Lost</th>
+
+            <th>&nbsp;</th>
+
+            {% for n in range(1, 9) %}
+              <th class="count narrow">{{ n }}</th>
+            {% endfor %}
+
+            <th class="count">Held</th>
+          </tr>
+        </thead>
+          <tbody>
+            {% for cloud_name in grid['clouds']|sort %}
+                {% set cloud = grid['clouds'][cloud_name] %}
+                {% set vmtypes = cloud['vmtypes'] %}
+                {% set slots = cloud['slots'] %}
+                {% set cycle = loop.cycle('odd', 'even') %}
+
+                {% for vmtype in vmtypes %}
+
+                  <tr class="cloud-{{ cloud_name }} vmtype-{{ vmtype }}">
+
+                    {% if loop.first %}
+                      <td rowspan="{{ vmtypes|length }}"><a href="/clouds/{{ grid_name }}/{{ cloud_name }}">{{ cloud_name }}</a></td>
+                    {% endif %}
+                    <td class="name">{{ vmtype }}</td>
+
+                    {% for status in vm_statuses %}
+                      {% set path  = 'grids.{}.clouds.{}.vms.{}.{}'.format(grid_name, cloud_name, vmtype, status) %}
+                      {% set value = cloud['vmtypes'][vmtype][status] or '0' %}
+
+                      <td data-path="{{ path }}" class="metric count vms {{ status }}">{{ value }}</td>
+                    {% endfor %}
+
+                    <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.idle.{{ vmtype }}" class="metric count idle-vms">{{ cloud['idle'][vmtype] or '0' }}</td>
+
+                    {% if loop.first %}
+                      {% if 'lost' in cloud %}
+                        <td data-path="transformNull(removeBelowValue(diffSeries(sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.api-vms.{running,starting,error}),sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.vms.*.total)), 0), 0)" class="metric count lost-vms" rowspan="{{ vms|length }}">
+                          {{ cloud['lost'] }}
+                        </td>
+                      {% else %}
+                        <td rowspan="{{ vmtypes|length }}"></td>
+                      {% endif %}
+                    {% endif %}
+
+                    <td>&nbsp;</td>
+
+                    {% for n in range(1, 9) %}
+                      {% set slot = 'slot1_{}'.format(n) %}
+                      {% set path = 'grids.{}.clouds.{}.slots.{}.{}'.format(grid_name, cloud_name, vmtype, slot) %}
+
+                      {% if vmtype in cloud['slots'] %}
+                        {% if slot in cloud['slots'][vmtype] %}
+                          {% set value = cloud['slots'][vmtype][slot] or '0' %}
+                          <td data-path="{{ path }}" class="metric count narrow slots slot1_{{ n }}">{{ value }}</td>
+                        {% else %}
+                          <td class="count narrow">0</td>
+                        {% endif %}
+                      {% else %}
+                        <td class="count narrow">0</td>
+                      {% endif %}
+                    {% endfor %}
+
+                    {% if loop.first %}
+                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.jobs.all.held" class="metric count held-jobs" rowspan="{{ vmtypes|length }}">
+                        {% if 'jobs' in cloud %}
+                          {{ cloud['jobs']['all']['held'] or '0' }}
+                        {% else %}
+                          0
+                        {% endif %}
+                      </td>
+                    {% endif %}
+
+                  </tr>
+
+                {% endfor %}
+
+              {% endfor %}
+          </tbody>
+      </table>
+    </div>
+    <div class="col-md-4">
+      <table class="table table-condensed">
+        <thead>
+          <tr>
+            <th rowspan="2" class="name">Jobs</th>
+            <th class="group" colspan="4">HTCondor Jobs</th>
+          </tr>
+          <tr>
+            {% for status in job_statuses %}
+              <th class="count">{{ status.title() }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name">All</td>
+
+            {% for status in job_statuses %}
+              {% set path  = 'grids.{}.jobs.all.{}'.format(grid_name, status) %}
+              {% set value = grid['jobs']['all'][status] or '0' %}
+
+              <td data-path="{{ path }}" class="metric count jobs all {{ status }}">{{ value }}</td>
+            {% endfor %}
+          </tr>
+
+          {% for jobtype in grid['jobs']|sort if jobtype != 'all' %}
+            <tr>
+              <td class="name">{{ jobtype.replace('_', ' ') }}</td>
+
+              {% for status in job_statuses %}
+                {% set path  = 'grids.{}.jobs.{}.{}'.format(grid_name, jobtype, status) %}
+                {% set value = grid['jobs'][jobtype][status] or '0' %}
+
+                <td data-path="{{ path }}" class="metric count jobs {{ jobtype }} {{ status }}">{{ value }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% endfor %}
