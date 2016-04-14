@@ -43,12 +43,14 @@ section.main { width: 100%; }
 section.side { width: 0%; }
 
 h1 { float: left; color: #fff; margin: 0; padding: 10px; font-size: 20px; }
+h1 a { color: #fff; text-decoration: none; }
 h2 { background: #656a76; color: #fff; font-size: 14px; padding: 0 10px; margin: 0; }
 
 .tables h3 { background: #ccc; color: #000; font-size: 14px; padding: 0 10px; margin: -10px -10px 8px; }
 .tables table + h3 { margin-top: 10px; }
 
 .grid-name { overflow: hidden; background: #656a76; color: #fff; font-size: 14px; padding: 0 10px; margin: 0; }
+.grid-name a { color: #33b5e5; text-decoration: none; }
 .grid-name h2 { float: left; padding: 0 10px 0 0; }
 .grid-name + .tables { margin-top: 10px; }
 

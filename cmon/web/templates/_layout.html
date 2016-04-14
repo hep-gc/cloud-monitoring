@@ -15,15 +15,14 @@
 </head>
 <body>
   <header>
-    <h1>Cloud Monitor</h1>
+    <h1><a href="/">Cloud Monitor</a></h1>
     <nav>
       <ul>
-        {% if request.path != '/' %}
-          <li><a href="/">Overview</a></li>
-        {% endif %}
-        {% if back %}
-          <li><a href="{{ back }}">Cloud</a></li>
-        {% endif %}
+        <li><a target="_blank" href="">Sensu</a></li>
+        <li><a target="_blank" href="">Grafana</a></li>
+        <li><a target="_blank" href="">Kibana</a></li>
+        <li><a target="_blank" href="">Ganglia</a></li>
+        <li><a target="_blank" href="">Graphite</a></li>
       </ul>
       {% if request.path == '/' %}
         <ul class="right">

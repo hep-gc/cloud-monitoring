@@ -3,7 +3,7 @@
 {% block content %}
   <div class="grid">
     <div class="grid-name">
-      <h2>{{ job.grid }} &rarr; {{ job.cloud }} &rarr; Job {{ job._id }}</h2>
+      <h2><a href="/">Overview</a> &rarr; <a href="{{ back }}">{{ job.grid }} &rarr; {{ job.cloud }}</a> &rarr; Job {{ job._id }}</h2>
     </div>
     <div class="tables">
       <div class="table" style="width: 50%">

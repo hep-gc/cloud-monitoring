@@ -32,13 +32,14 @@
         {% endif %}
         #}
         {% for cloud_name in cloud_list %}
-          {% set enabled = grid['clouds'][cloud_name]['enabled'] %}
-          {% set quota = grid['clouds'][cloud_name]['quota'] or '-' %}
-          {% set path  = 'grids.{}.clouds.{}'.format(grid_name, cloud_name) %}
-          <li data-path="{{ path }}.enabled|{{ path }}.quota" class="metric cloud {{ 'enabled' if enabled else 'disabled' }} ">
-            {{ cloud_name }}
-              <span>({{ quota }})</span>
-          </li>
+          {% if grid['clouds'][cloud_name]['enabled'] %}
+            {% set quota = grid['clouds'][cloud_name]['quota'] or '-' %}
+            {% set path  = 'grids.{}.clouds.{}'.format(grid_name, cloud_name) %}
+            <li data-path="{{ path }}.enabled|{{ path }}.quota" class="metric cloud enabled">
+              {{ cloud_name }}
+                <span>({{ quota }})</span>
+            </li>
+          {% endif %}
         {% endfor %}
       </ul>
 
