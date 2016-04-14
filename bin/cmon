@@ -10,6 +10,7 @@ import struct
 import sys
 import time
 import yaml
+
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 
@@ -419,8 +420,6 @@ channel.queue_bind(exchange=exchange, queue=queue)
 try:
     def callback(ch, method, props, body):
         parse_status(json.loads(body), timestamp=props.timestamp)
-
-        print props
 
         # Acknowledge message to prevent re-queueing
         ch.basic_ack(delivery_tag=method.delivery_tag)
