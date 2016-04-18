@@ -19,7 +19,7 @@ setup(name='cmon',
           'cmon.web'
       ],
       package_data={
-          'cmon.web': ['static/*', 'templates/*'],
+          'cmon.web': ['static/**/*', 'templates/**/*'],
       },
       data_files=[
           ('etc/cmon', ['config/cmon.yml.example']),
