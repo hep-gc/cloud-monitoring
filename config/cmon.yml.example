@@ -1,6 +1,3 @@
-static_path: /usr/share/cmon/static
-templates_path: /usr/share/cmon/templates
-
 log_file: /var/log/cmon.log
 log_level: DEBUG
 
