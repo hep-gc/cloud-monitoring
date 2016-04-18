@@ -61,9 +61,9 @@
                   <tr class="cloud-{{ cloud_name }} vmtype-{{ vmtype }}">
 
                     {% if loop.first %}
-                      <td rowspan="{{ vmtypes|length }}"><a href="/clouds/{{ grid_name }}/{{ cloud_name }}">{{ cloud_name }}</a></td>
+                      <td rowspan="{{ vmtypes|length }}"><a href="/clouds/{{ grid_name }}/{{ cloud_name }}"><strong>{{ cloud_name }}</strong></a></td>
                     {% endif %}
-                    <td class="name">{{ vmtype }}</td>
+                    <td class="name"><small>{{ vmtype }}</small></td>
 
                     {% for status in vm_statuses %}
                       {% set path  = 'grids.{}.clouds.{}.vms.{}.{}'.format(grid_name, cloud_name, vmtype, status) %}

@@ -1,11 +1,12 @@
 <div class="row">
-  <div class="col-md-7">
+  <div class="col-md-8">
     <div class="panel panel-default">
       <div class="panel-heading">VMs</div>
       <table class="table">
         <thead>
           <tr>
             <th>Hostname</th>
+            <th>Type</th>
             <th>Status</th>
             <th>Booted</th>
             <th>Updated</th>
@@ -14,10 +15,8 @@
         <tbody>
           {% for vm in cloud.vms %}
             <tr class="{{ vm.status }}">
-              <td class="name">
-                <a href="{{ request.path }}/vms/{{ vm.hostname }}">{{ vm.hostname.split('.')[0] }}</a><br>
-                <small>{{ vm.type }}</small>
-              </td>
+              <td><a href="{{ request.path }}/vms/{{ vm.hostname }}"><strong>{{ vm.hostname.split('.')[0] }}</strong></a></td>
+              <td>{{ vm.type }}</td>
               <td><span class="label label-{{ vm.status | status_label }}">{{ vm.status }}</span></td>
               <td>{{ vm.initialize_time.strftime('%H:%M:%S %d-%b') }}</td>
               <td>{{ vm.last_updated.strftime('%H:%M:%S %d-%b') }}</td>
@@ -27,7 +26,7 @@
       </table>
     </div>
   </div>
-  <div class="col-md-5">
+  <div class="col-md-4">
     <div class="panel panel-default">
       <div class="panel-heading">Jobs</div>
       <table class="table">
@@ -36,17 +35,15 @@
             <th>ID</th>
             <th>Status</th>
             <th>Queued</th>
-            <th>Status Changed</th>
             <th>Updated</th>
           </tr>
         </thead>
         <tbody>
           {% for job in cloud.jobs %}
             <tr class="{{ job.status }}">
-              <td class="name"><a href="{{ request.path }}/jobs/{{ job._id }}">{{ job._id }}</a></td>
+              <td><a href="{{ request.path }}/jobs/{{ job._id }}"><strong>{{ job._id }}</strong></a></td>
               <td><span class="label label-{{ job.status | status_label }}">{{ job.status }}</span></td>
               <td>{{ job.queue_date.strftime('%H:%M:%S %d-%b') }}</td>
-              <td>{{ job.status_history.pop()[0].strftime('%H:%M:%S %d-%b') }}</td>
               <td>{{ job.last_updated.strftime('%H:%M:%S %d-%b') }}</td>
             </tr>
           {% endfor %}

@@ -18,9 +18,6 @@
           <dd>{{ vm.last_updated.strftime('%H:%M:%S %d-%b') }}</dd>
         </dl>
       </div>
-    </div>
-    <div class="panel panel-default">
-      <div class="panel-heading">Status History</div>
       <table class="table">
         <thead>
           <tr>
@@ -39,32 +36,43 @@
       </table>
     </div>
     <div class="panel panel-default">
-      <div class="panel-heading">Job History</div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Job</th>
-            <th>Status</th>
-            <th>Queued</th>
-            <th>Status Changed</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for job in vm.jobs %}
-            <tr class="{{ job['status'] }}">
-              <td>
-                <a href="/clouds/{{ job.grid }}/{{ job.cloud }}/jobs/{{ job._id }}">{{ job._id }}</a>
-              </td>
-              <td><span class="label label-{{ job['status'] | status_label }}">{{ job['status'] }}</span></td>
-              <td>{{ job.queue_date.strftime('%H:%M:%S %d-%b') }}</td>
-              <td>
-                {{ job.status_history.pop()[0].strftime('%H:%M:%S %d-%b') }}
-              </td>
+      <div class="panel-heading">Jobs</div>
+      <div style="height: 200px; overflow-y: scroll;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Status</th>
+              <th>Queued</th>
+              <th>Status Changed</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for job in vm.jobs %}
+              <tr class="{{ job['status'] }}">
+                <td>
+                  <a href="/clouds/{{ job.grid }}/{{ job.cloud }}/jobs/{{ job._id }}">{{ job._id }}</a>
+                </td>
+                <td><span class="label label-{{ job['status'] | status_label }}">{{ job['status'] }}</span></td>
+                <td>{{ job.queue_date.strftime('%H:%M:%S %d-%b') }}</td>
+                <td>
+                  {{ job.status_history.pop()[0].strftime('%H:%M:%S %d-%b') }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
+    {#
+    <div class="panel panel-default">
+      <div class="panel-heading">Ganglia</div>
+      <div class="panel-body">
+        <img src="http://monitor.heprc.uvic.ca/ganglia/graph.php?c={{ vm.grid }}&amp;h={{ vm.hostname.split('.')[0] }}&amp;r=hour&amp;g=cpu_report&amp;width=400&amp;height=200">
+        <img src="http://monitor.heprc.uvic.ca/ganglia/graph.php?c={{ vm.grid }}&amp;h={{ vm.hostname.split('.')[0] }}&amp;r=hour&amp;g=mem_report&amp;width=400&amp;height=200">
+      </div>
+    </div>
+    #}
   </div>
   <div class="col-md-6">
     <div class="panel panel-default">

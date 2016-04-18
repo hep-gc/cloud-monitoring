@@ -1,3 +1,5 @@
+body { padding-top: 50px; }
+
 .navbar { margin-bottom: 0; }
 .breadcrumb { margin: 0 -15px 20px; border-radius: 0; }
 
@@ -37,4 +39,3 @@ p .label { margin-right: 5px; }
 .select-range a { color: #aaa; text-decoration: none; }
 .select-range a:hover { color: #000; }
 .select-range .selected, .select-range .selected:hover { font-weight: bold; color: #5cb85c; }
-
