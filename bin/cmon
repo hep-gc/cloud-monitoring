@@ -14,15 +14,10 @@ from datetime import datetime, timedelta
 from pymongo import MongoClient
 from time import strftime
 
+from cmon import CARBON_PATHS
+
 
 DEFAULT_CONFIG_FILE = '/etc/cmon/cmon.yml'
-
-CARBON_OTHER_PATH      = 'grids.%s.clouds.%s.%s'
-CARBON_SLOTS_PATH      = 'grids.%s.clouds.%s.slots.%s.%s'
-CARBON_CLOUD_JOBS_PATH = 'grids.%s.clouds.%s.jobs.%s.%s'
-CARBON_IDLE_PATH       = 'grids.%s.clouds.%s.idle.%s'
-CARBON_JOBS_PATH       = 'grids.%s.jobs.%s.%s'
-CARBON_VMTYPE_PATH     = 'grids.%s.clouds.%s.vms.%s.%s'
 
 
 def parse_status(status, timestamp):
@@ -123,10 +118,10 @@ def parse_status(status, timestamp):
             if db_vm:
                 vm_status_history = db_vm.get('status_history', [])
                 if vm_status != db_vm_status:
-                    print '%s:%s:%s %s -> %s' % (grid_name, cloud_name, vm_id, db_vm_status, vm_status)
+                    logger.debug('%s - %s/%s %s -> %s', grid_name, cloud_name, vm_id, db_vm_status, vm_status)
                     vm_status_history.append([datetime.now(), vm_status])
             else:
-                print '%s:%s:%s %s' % (grid_name, cloud_name, vm_id, vm_status)
+                logger.debug('%s - %s/%s %s', grid_name, cloud_name, vm_id, vm_status)
                 vm_status_history = [[datetime.now(), vm_status]]
 
             vm_doc['status_history'] = vm_status_history
@@ -206,14 +201,14 @@ def parse_status(status, timestamp):
             job_host_history = db_job.get('host_history', [])
 
             if job['status'] != db_job_status:
-                print '%s:%s %s -> %s' % (grid_name, job_id, db_job_status, job['status'])
+                logger.debug('%s - %s %s -> %s', grid_name, job_id, db_job_status, job['status'])
                 job_status_history.append([datetime.now(), job['status']])
 
             if job_host != db_job_host:
-                print '%s:%s %s -> %s' % (grid_name, job_id, db_job_host, job_host)
+                logger.debug('%s - %s %s -> %s', grid_name, job_id, db_job_host, job_host)
                 job_host_history.append([datetime.now(), job_host])
         else:
-            print '%s:%s %s %s' % (grid_name, job_id, job['status'], job_host)
+            logger.debug('%s - %s %s %s', grid_name, job_id, job['status'], job_host)
             job_status_history = [[datetime.now(), job['status']]]
             job_host_history = [[datetime.now(), job_host]]
 
@@ -321,7 +316,7 @@ def parse_status(status, timestamp):
             vm_doc['status'] = 'gone'
             vm_doc['status_history'].append([datetime.now(), 'gone'])
 
-            print '%s:%s:%s %s' % (grid_name, db_vm['cloud'], vm_id, 'gone')
+            logger.debug('%s - %s/%s %s', grid_name, db_vm['cloud'], vm_id, 'gone')
             db.vms.replace_one({'_id': vm_id}, vm_doc, upsert=True)
 
     # Mark Inactive Jobs #######################################################
@@ -332,7 +327,7 @@ def parse_status(status, timestamp):
             job_doc['status'] = 'gone'
             job_doc['status_history'].append([datetime.now(), 'gone'])
 
-            print '%s:%s %s' % (grid_name, job_id, 'gone')
+            logger.debug('%s - %s %s', grid_name, job_id, 'gone')
             db.jobs.replace_one({'_id': job_id}, job_doc, upsert=True)
 
     # Update Graphite ##########################################################
@@ -341,31 +336,31 @@ def parse_status(status, timestamp):
 
     for cloud_name, cloud in grid['clouds'].iteritems():
         for metric in ['enabled', 'quota', 'mips', 'kflops']:
-            path = CARBON_OTHER_PATH % (grid_name, cloud_name, metric)
+            path = CARBON_PATHS['cloud_other'].format(grid_name, cloud_name, metric)
             metrics[path] = cloud[metric]
 
         for vmtype, slots in cloud['slots'].iteritems():
             for slot, count in slots.iteritems():
-                path = CARBON_SLOTS_PATH % (grid_name, cloud_name, vmtype, slot)
+                path = CARBON_PATHS['cloud_slots'].format(grid_name, cloud_name, vmtype, slot)
                 metrics[path] = count
 
         for vmtype, count in cloud['idle'].iteritems():
-            path = CARBON_IDLE_PATH % (grid_name, cloud_name, vmtype)
+            path = CARBON_PATHS['cloud_idle'].format(grid_name, cloud_name, vmtype)
             metrics[path] = count
 
         for vmtype, statuses in cloud['vmtypes'].iteritems():
             for status, count in statuses.iteritems():
-                path = CARBON_VMTYPE_PATH % (grid_name, cloud_name, vmtype, status)
+                path = CARBON_PATHS['cloud_vms'].format(grid_name, cloud_name, vmtype, status)
                 metrics[path] = count
 
         for jobtype, statuses in cloud['jobs'].iteritems():
             for status, count in statuses.iteritems():
-                path = CARBON_CLOUD_JOBS_PATH % (grid_name, cloud_name, jobtype, status)
+                path = CARBON_PATHS['cloud_jobs'].format(grid_name, cloud_name, jobtype, status)
                 metrics[path] = count
 
     for jobtype, statuses in grid['jobs'].iteritems():
         for status, count in statuses.iteritems():
-            path = CARBON_JOBS_PATH % (grid_name, jobtype, status)
+            path = CARBON_PATHS['jobs'].format(grid_name, jobtype, status)
             metrics[path] = count
 
     graphite_metrics = []
@@ -381,15 +376,13 @@ def parse_status(status, timestamp):
     package = pickle.dumps(graphite_metrics, 1)
     length  = struct.pack('!L', len(package))
 
-    print "[%s] %d metrics sent" % (strftime('%Y-%m-%d %H:%M:%S'), len(graphite_metrics))
+    logger.info('{} - {} metrics sent to Graphite'.format(grid_name, len(graphite_metrics)))
 
     sock.sendall(length + package)
     sock.close()
 
 
 # Configure C'mon ##############################################################
-
-logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser(description="C'mon: monitor your clouds")
 parser.add_argument('--debug', action='store_true')
@@ -399,10 +392,28 @@ args = parser.parse_args()
 with open(args.config_file, 'r') as config_file:
     config = yaml.load(config_file)
 
+logger = logging.getLogger('cmon')
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s %(name)s [%(levelname)8s] %(message)s")
+
+handler_stream = logging.StreamHandler()
+handler_stream.setFormatter(formatter)
+logger.addHandler(handler_stream)
+
+handler_file = logging.FileHandler(config['log_file'])
+handler_file.setFormatter(formatter)
+logger.addHandler(handler_file)
+
+
 # Connect to DB and RabbitMQ ###################################################
 
+logger.info("Starting C'mon")
+
+logger.info('Connecting to MongoDB %s:%s/%s', config['mongodb']['server'], config['mongodb']['port'], config['mongodb']['db'])
 db = MongoClient(config['mongodb']['server'], config['mongodb']['port'])[config['mongodb']['db']]
 
+logger.info('Connecting to RabbitMQ %s@%s:%s%s', config['rabbitmq']['user'], config['rabbitmq']['server'], config['rabbitmq']['port'], config['rabbitmq']['vhost'])
 creds = pika.PlainCredentials(config['rabbitmq']['user'], config['rabbitmq']['secret'])
 params = pika.ConnectionParameters(config['rabbitmq']['server'], config['rabbitmq']['port'], config['rabbitmq']['vhost'], creds)
 rmq = pika.BlockingConnection(params)
@@ -424,11 +435,12 @@ try:
         # Acknowledge message to prevent re-queueing
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
+    logger.info('Consuming message queue...')
     channel.basic_consume(callback, queue=queue)
     channel.start_consuming()
 
 except KeyboardInterrupt:
-    logging.info('Shutting down...')
+    logger.info('Shutting down...')
 
 finally:
     rmq.close()
