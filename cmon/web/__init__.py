@@ -180,7 +180,8 @@ def get_grids():
     cursor = db.grids.find()
     for grid in cursor:
         grids[grid['_id']] = grid
-        grids[grid['_id']]['last_updated'] = grids[grid['_id']]['last_updated'].strftime('%H:%M:%S %d-%b')
+        grids[grid['_id']]['data_valid'] = grids[grid['_id']]['last_updated'] > datetime.now() + timedelta(minutes=-10)
+        grids[grid['_id']]['last_updated_str'] = grids[grid['_id']]['last_updated'].strftime('%H:%M:%S %d-%b')
     return grids
 
 
