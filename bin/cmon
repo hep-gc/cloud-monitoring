@@ -20,8 +20,38 @@ from cmon import CARBON_PATHS
 DEFAULT_CONFIG_FILE = '/etc/cmon/cmon.yml'
 
 
-def parse_status(status, timestamp):
-    grid_name = status['grid']
+def message_callback(ch, method, props, body):
+    try:
+        msg = json.loads(body)
+    except ValueError:
+        print 'Invalid message - JSON parsing failed'
+
+    if 'resources' in msg:
+        parse_resources(msg, props.timestamp)
+    elif 'clouds' in msg:
+        parse_status(msg, props.timestamp)
+    else:
+        print 'Invalid message - missing a "resources" or "clouds" key'
+
+    # Acknowledge message to prevent re-queueing
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
+
+def parse_resources(msg, timestamp):
+    grid_name = msg['grid']
+
+    # Fetch Current VMs ########################################################
+
+    db_vms = {}
+    cursor = db.vms.find({'grid': grid_name, 'last_updated': {'$gte': datetime.now() - timedelta(hours=1)}})
+    for vm in cursor:
+        db_vms[vm['_id']] = vm
+
+    print msg['resources']
+
+
+def parse_status(msg, timestamp):
+    grid_name = msg['grid']
     grid = {
         'clouds': {},
         'jobs': {
@@ -55,7 +85,7 @@ def parse_status(status, timestamp):
 
     # Process Clouds ###########################################################
 
-    for cloud in status['clouds']:
+    for cloud in msg['clouds']:
         cloud_name = cloud['name']
 
         grid['clouds'][cloud_name] = {
@@ -161,7 +191,7 @@ def parse_status(status, timestamp):
 
     # Process Jobs #############################################################
 
-    for job in status['jobs']:
+    for job in msg['jobs']:
         job_id = job['id']
         job_host = job.get('remote_host')
         job_last_host = job.get('last_remote_host')
@@ -263,7 +293,7 @@ def parse_status(status, timestamp):
 
     # Process Slots ############################################################
 
-    for slot in status['slots']:
+    for slot in msg['slots']:
         (slot_name, machine) = slot['name'].split('@')
 
         if '_' not in slot_name:
@@ -306,7 +336,7 @@ def parse_status(status, timestamp):
 
     # Store Raw Data ###########################################################
 
-    db.status.replace_one({'_id': grid_name}, status, upsert=True)
+    db.status.replace_one({'_id': grid_name}, msg, upsert=True)
 
     # Mark Inactive VMs ########################################################
 
@@ -426,17 +456,12 @@ channel.exchange_declare(exchange=exchange, exchange_type='fanout')
 channel.queue_declare(queue=queue, durable=True)
 channel.queue_bind(exchange=exchange, queue=queue)
 
-# Start Consuming Status #######################################################
+
+# Start Consuming Messages #####################################################
 
 try:
-    def callback(ch, method, props, body):
-        parse_status(json.loads(body), timestamp=props.timestamp)
-
-        # Acknowledge message to prevent re-queueing
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-
     logger.info('Consuming message queue...')
-    channel.basic_consume(callback, queue=queue)
+    channel.basic_consume(message_callback, queue=queue)
     channel.start_consuming()
 
 except KeyboardInterrupt:

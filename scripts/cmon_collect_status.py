@@ -1,4 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python2.6
+########################################################################
+# This needs to be set to whichever Python has the htcondor and pika
+# packages installed.
 
 import htcondor
 import logging
@@ -15,13 +18,12 @@ if sys.version_info <= (2, 6):
     json.dumps = json.write
 
 
+# RabbitMQ configuration
 RMQ_SERVER = 'SENSU RABBITMQ SERVER GOES HERE'
 RMQ_PORT = 5672
 RMQ_USER = 'sensu'
 RMQ_SECRET = 'SENSU RABBITMQ SECRET GOES HERE'
 RMQ_VHOST = '/sensu'
-
-GRID_NAME = sys.argv[1] if len(sys.argv) > 1 else gethostname()
 
 CONDOR_JOB_STATUSES = {
     0: 'unexpanded',
@@ -90,8 +92,11 @@ for condor_slot in condor_slots:
 
     slots.append(slot)
 
+
+grid_name = sys.argv[1] if len(sys.argv) > 1 else gethostname()
+
 payload = {
-    'grid': GRID_NAME,
+    'grid': grid_name,
     'clouds': clouds,
     'jobs': jobs,
     'slots': slots,
@@ -113,4 +118,4 @@ channel.basic_publish(exchange='cmon', routing_key='', body=payload, properties=
 
 rmq.close()
 
-print "OK: %d bytes of JSON sent for %s" % (len(payload), GRID_NAME)
+print "OK: %d bytes of JSON sent for %s" % (len(payload), grid_name)

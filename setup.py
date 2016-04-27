@@ -22,10 +22,10 @@ setup(name='cmon',
           'cmon.web': ['static/**/*', 'templates/**/*'],
       },
       data_files=[
-          ('etc/cmon', ['config/cmon.yml.example']),
-          ('etc/init', ['config/cmon.conf']),
-          ('share/cmon', ['config/cmon.wsgi']),
-          ('etc/apache2/sites-available', ['config/apache2-cmon.conf'])
+          ('/usr/share/cmon/etc/cmon', ['config/cmon.yml.example']),
+          ('/usr/share/cmon/etc/init', ['config/cmon.conf']),
+          ('/usr/share/cmon', ['config/cmon.wsgi']),
+          ('/usr/share/cmon/etc/apache2/sites-available', ['config/apache2-cmon.conf'])
       ],
       install_requires=[
           'elasticsearch',
