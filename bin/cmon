@@ -166,6 +166,7 @@ def parse_status(msg, timestamp):
                     'retiring': 0,
                     'error':    0,
                     'shutdown': 0,
+                    'unknown': 0,
                 }
 
             grid['clouds'][cloud_name]['vms'][vm['hostname'].split('.')[0]] = {
@@ -175,7 +176,10 @@ def parse_status(msg, timestamp):
             }
 
             grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total'] += 1
-            grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']][vm_status] += 1
+            if vm_status in grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']].keys():
+                grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']][vm_status] += 1
+            else:
+                grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['unknown'] += 1
 
         cloud_id = '.'.join((grid_name, cloud_name))
         cloud_doc = {
