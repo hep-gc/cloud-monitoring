@@ -105,17 +105,21 @@ payload = json.dumps(payload)
 
 creds = pika.PlainCredentials(RMQ_USER, RMQ_SECRET)
 params = pika.ConnectionParameters(RMQ_SERVER, RMQ_PORT, RMQ_VHOST, creds)
-rmq = pika.BlockingConnection(params)
+try:
+    rmq = pika.BlockingConnection(params)
 
-props = pika.BasicProperties(
-    delivery_mode=2,
-    timestamp=int(time.time())
-)
+    props = pika.BasicProperties(
+        delivery_mode=2,
+        timestamp=int(time.time())
+    )
 
-channel = rmq.channel()
-channel.exchange_declare(exchange='cmon', exchange_type='fanout')
-channel.basic_publish(exchange='cmon', routing_key='', body=payload, properties=props)
-
-rmq.close()
+    channel = rmq.channel()
+    channel.exchange_declare(exchange='cmon', exchange_type='fanout')
+    channel.basic_publish(exchange='cmon', routing_key='', body=payload, properties=props)
+except Exception as e:
+    print "ERROR: %s" % str(e)
+    sys.exit(1)
+finally:
+    rmq.close()
 
 print "OK: %d bytes of JSON sent for %s" % (len(payload), grid_name)
