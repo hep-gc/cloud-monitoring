@@ -56,7 +56,7 @@ condor_jobs   = condor_schedd.query('True', [
     'EnteredCurrentStatus'])
 
 # Query Cloud Scheduler to get VMs
-clouds = Popen(['cloud_status', '-aj'], stdout=PIPE).communicate()[0]
+clouds = Popen(['/usr/local/bin/cloud_status -aj'], shell=True, stdout=PIPE).communicate()[0]
 clouds = json.loads(clouds)['resources']
 
 jobs = []
@@ -114,7 +114,7 @@ try:
     )
 
     channel = rmq.channel()
-    channel.exchange_declare(exchange='cmon', exchange_type='fanout')
+    channel.exchange_declare(exchange='cmon', type='fanout')
     channel.basic_publish(exchange='cmon', routing_key='', body=payload, properties=props)
 except Exception as e:
     print "ERROR: %s" % str(e)
