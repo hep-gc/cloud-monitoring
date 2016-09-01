@@ -467,7 +467,7 @@ try:
     logger.info('Consuming message queue...')
     channel.basic_consume(message_callback, queue=queue)
     channel.start_consuming()
-
+    logger.info('Done eating the queue.')
 except KeyboardInterrupt:
     logger.info('Shutting down...')
 
