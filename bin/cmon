@@ -466,6 +466,7 @@ channel.queue_bind(exchange=exchange, queue=queue)
 try:
     logger.info('Consuming message queue...')
     channel.basic_consume(message_callback, queue=queue)
+    logger.debug('Queue: %s', queue)
     channel.start_consuming()
     logger.info('Done eating the queue.')
 except KeyboardInterrupt:
