@@ -449,7 +449,9 @@ db = MongoClient(config['mongodb']['server'], config['mongodb']['port'])[config[
 
 logger.info('Connecting to RabbitMQ %s@%s:%s%s', config['rabbitmq']['user'], config['rabbitmq']['server'], config['rabbitmq']['port'], config['rabbitmq']['vhost'])
 creds = pika.PlainCredentials(config['rabbitmq']['user'], config['rabbitmq']['secret'])
-params = pika.ConnectionParameters(config['rabbitmq']['server'], config['rabbitmq']['port'], config['rabbitmq']['vhost'], creds, backpressure_detection=config['rabbitmq']['backpressure'])
+#params = pika.ConnectionParameters(config['rabbitmq']['server'], config['rabbitmq']['port'], config['rabbitmq']['vhost'], creds, backpressure_detection=config['rabbitmq']['backpressure'])
+params = pika.ConnectionParameters(config['rabbitmq']['server'], config['rabbitmq']['port'], config['rabbitmq']['vhost'], creds)
+
 rmq = pika.BlockingConnection(params)
 
 exchange = config['rabbitmq']['exchange']
