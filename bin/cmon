@@ -85,9 +85,12 @@ def parse_status(msg, timestamp):
 
     # Process Clouds ###########################################################
     logger.debug(msg)
+    logger.debug(len(msg['clouds']))
 
     for cloud in msg['clouds']:
         cloud_name = cloud['name']
+
+        logger.debug("clound_name: %s", cloud_name)
 
         grid['clouds'][cloud_name] = {
             'enabled': 1 if cloud['enabled'] else 0,
