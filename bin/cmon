@@ -156,6 +156,7 @@ def parse_status(msg, timestamp):
 
             vm_doc['status_history'] = vm_status_history
 
+            logger.debug("vm_id: %s")
             db.vms.replace_one({'_id': vm_id}, vm_doc, upsert=True)
 
             if vm['vmtype'] not in grid['clouds'][cloud_name]['vmtypes']:
@@ -191,6 +192,7 @@ def parse_status(msg, timestamp):
             'quota': cloud['max_slots'],
         }
         
+        logger.debug("cloud_id: %s", clound_id)
         db.clouds.replace_one({'_id': cloud_id}, cloud_doc, upsert=True)
 
     # Process Jobs #############################################################
