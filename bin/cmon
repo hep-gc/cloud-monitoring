@@ -90,7 +90,7 @@ def parse_status(msg, timestamp):
     for cloud in msg['clouds']:
         cloud_name = cloud['name']
 
-        logger.debug("clound_name: %s", cloud_name)
+        logger.debug("cloud_name: %s", cloud_name)
 
         grid['clouds'][cloud_name] = {
             'enabled': 1 if cloud['enabled'] else 0,
@@ -200,6 +200,8 @@ def parse_status(msg, timestamp):
         db.clouds.replace_one({'_id': cloud_id}, cloud_doc, upsert=True)
 
     # Process Jobs #############################################################
+
+    logger.debug("jobs: %s", len(msg['jobs']))
 
     for job in msg['jobs']:
         job_id = job['id']
