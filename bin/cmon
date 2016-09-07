@@ -161,7 +161,7 @@ def parse_status(msg, timestamp):
             vm_doc['status_history'] = vm_status_history
 
             logger.debug("vm_id: %s")
-            db.vms.replace_one({'_id': vm_id}, vm_doc, upsert=True)
+            db.vms.replace_one({'_id': vm_id}, vm_doc, True)
 
             if vm['vmtype'] not in grid['clouds'][cloud_name]['vmtypes']:
                 grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']] = {
@@ -197,7 +197,7 @@ def parse_status(msg, timestamp):
         }
         
         logger.debug("cloud_id: %s", clound_id)
-        db.clouds.replace_one({'_id': cloud_id}, cloud_doc, upsert=True)
+        db.clouds.replace_one({'_id': cloud_id}, cloud_doc, True)
 
     # Process Jobs #############################################################
 
@@ -279,7 +279,7 @@ def parse_status(msg, timestamp):
         job_doc['type'] = job_type
 
         logger.debug("job_id: %s", job_id)
-        db.jobs.replace_one({'_id': job_id}, job_doc, upsert=True)
+        db.jobs.replace_one({'_id': job_id}, job_doc, True)
 
         grid['jobs']['all']['total'] += 1
         grid['jobs']['all'][job['status']] += 1
@@ -346,11 +346,11 @@ def parse_status(msg, timestamp):
     grid['last_updated'] = datetime.now()
 
     logger.debug("grid_name: %s", grid_name)
-    db.grids.replace_one({'_id': grid_name}, grid, upsert=True)
+    db.grids.replace_one({'_id': grid_name}, grid, True)
 
     # Store Raw Data ###########################################################
 
-    db.status.replace_one({'_id': grid_name}, msg, upsert=True)
+    db.status.replace_one({'_id': grid_name}, msg, True)
 
     # Mark Inactive VMs ########################################################
 
@@ -361,7 +361,7 @@ def parse_status(msg, timestamp):
             vm_doc['status_history'].append([datetime.now(), 'gone'])
 
             logger.debug('%s - %s/%s %s', grid_name, db_vm['cloud'], vm_id, 'gone')
-            db.vms.replace_one({'_id': vm_id}, vm_doc, upsert=True)
+            db.vms.replace_one({'_id': vm_id}, vm_doc, True)
 
     # Mark Inactive Jobs #######################################################
 
@@ -372,7 +372,7 @@ def parse_status(msg, timestamp):
             job_doc['status_history'].append([datetime.now(), 'gone'])
 
             logger.debug('%s - %s %s', grid_name, job_id, 'gone')
-            db.jobs.replace_one({'_id': job_id}, job_doc, upsert=True)
+            db.jobs.replace_one({'_id': job_id}, job_doc, True)
 
     # Update Graphite ##########################################################
 
