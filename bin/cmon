@@ -84,8 +84,8 @@ def parse_status(msg, timestamp):
     active_jobs = []
 
     # Process Clouds ###########################################################
-    logger.debug(msg)
-    logger.debug(len(msg['clouds']))
+    #logger.debug(msg)
+    logger.debug("clouds: %s", len(msg['clouds']))
 
     for cloud in msg['clouds']:
         cloud_name = cloud['name']
@@ -278,6 +278,7 @@ def parse_status(msg, timestamp):
 
         job_doc['type'] = job_type
 
+        logger.debug("job_id: %s", job_id)
         db.jobs.replace_one({'_id': job_id}, job_doc, upsert=True)
 
         grid['jobs']['all']['total'] += 1
@@ -344,6 +345,7 @@ def parse_status(msg, timestamp):
 
     grid['last_updated'] = datetime.now()
 
+    logger.debug("grid_name: %s", grid_name)
     db.grids.replace_one({'_id': grid_name}, grid, upsert=True)
 
     # Store Raw Data ###########################################################
