@@ -84,7 +84,7 @@ def parse_status(msg, timestamp):
     active_jobs = []
 
     # Process Clouds ###########################################################
-    #logger.debug(msg)
+    logger.debug(msg)
     logger.debug("clouds: %s", len(msg['clouds']))
 
     logger.debug("Cloud loop...")
