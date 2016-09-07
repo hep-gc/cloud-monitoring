@@ -197,7 +197,7 @@ def parse_status(msg, timestamp):
 
         logger.debug(type(grid_name))
         logger.debug(type(cloud_name))
-        cloud_id = '.'.join([grid_name, cloud_name])
+        cloud_id = '.'.join(str(grid_name), str(cloud_name))
         logger.debug("cloud_id: %s", clound_id)
         cloud_doc = {
             '_id': cloud_id,
