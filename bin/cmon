@@ -195,9 +195,9 @@ def parse_status(msg, timestamp):
                 grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['unknown'] += 1
         logger.debug('done for each loop on cloud dict')
 
-        logger.debug(type(grid_name))
-        logger.debug(type(cloud_name))
-        cloud_id = '.'.join(str(grid_name), str(cloud_name))
+        logger.debug(grid_name)
+        logger.debug(cloud_name)
+        cloud_id = '.'.join([str(grid_name), str(cloud_name)])
         logger.debug("cloud_id: %s", clound_id)
         cloud_doc = {
             '_id': cloud_id,
