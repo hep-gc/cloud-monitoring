@@ -87,7 +87,7 @@ def parse_status(msg, timestamp):
     #logger.debug(msg)
     logger.debug("clouds: %s", len(msg['clouds']))
 
-    logger.debug("Entering cloud loop...")
+    logger.debug("Cloud loop...")
     for cloud in msg['clouds']:
         cloud_name = cloud['name']
 
@@ -114,7 +114,7 @@ def parse_status(msg, timestamp):
             'mips':    0,
             'kflops':  0,
         }
-        logger.debug("Entered vm loop...")
+        logger.debug("VMs loop...")
         for vm in cloud['vms']:
             vm_id = vm['hostname']
 
@@ -122,9 +122,9 @@ def parse_status(msg, timestamp):
             if not vm_id:
                 logger.debug("No vms to process")
                 continue
-
+            
             active_vms.append(vm_id)
-
+            logger.debug("1")
             # Find or create a document for this VM
             db_vm = db_vms.get(vm_id)
             if db_vm:
@@ -142,7 +142,7 @@ def parse_status(msg, timestamp):
                     'alt_hostname': vm['alt_hostname'],
                     'initialize_time': datetime.fromtimestamp(vm['initialize_time']),
                 }
-
+            logger.debug("2")
             vm_doc['last_updated'] = datetime.now()
 
             vm_status = vm['status'].lower()
@@ -150,7 +150,7 @@ def parse_status(msg, timestamp):
                 vm_status = vm['override_status'].lower()
 
             vm_doc['status'] = vm_status
-            
+            logger.debug("3")
             if db_vm:
                 vm_status_history = db_vm.get('status_history', [])
                 if vm_status != db_vm_status:
@@ -159,7 +159,7 @@ def parse_status(msg, timestamp):
             else:
                 logger.debug('%s - %s/%s %s', grid_name, cloud_name, vm_id, vm_status)
                 vm_status_history = [[datetime.now(), vm_status]]
-
+            logger.debug("4")
             vm_doc['status_history'] = vm_status_history
 
             logger.debug("vm_id: %s")
@@ -205,7 +205,7 @@ def parse_status(msg, timestamp):
 
     logger.debug("jobs: %s", len(msg['jobs']))
 
-    logger.debug("Entering jobs loop...")
+    logger.debug("Jobs loop...")
     for job in msg['jobs']:
         job_id = job['id']
         job_host = job.get('remote_host')
