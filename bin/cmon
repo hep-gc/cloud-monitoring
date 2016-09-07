@@ -116,6 +116,7 @@ def parse_status(msg, timestamp):
         }
         logger.debug("VMs loop...")
         for vm in cloud['vms']:
+            logger.debug("0")
             vm_id = vm['hostname']
 
             # Ignore VMs without a hostname
@@ -308,7 +309,7 @@ def parse_status(msg, timestamp):
             grid['clouds'][job_doc['cloud']]['jobs']['all'][job['status']] += 1
 
     # Process Slots ############################################################
-    logger.debug("Entering slots loop...")
+    logger.debug("Slots loop...")
     for slot in msg['slots']:
         (slot_name, machine) = slot['name'].split('@')
 
