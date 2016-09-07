@@ -198,7 +198,7 @@ def parse_status(msg, timestamp):
         logger.debug(str(grid_name))
         logger.debug(str(cloud_name))
 
-        cloud_id = str(grid_name) + "." + str(cloud_name)
+        cloud_id = "Belle-II.chameleon"
         #cloud_id = '.'.join([str(grid_name), str(cloud_name)])
         logger.debug("cloud_id: %s", clound_id)
         cloud_doc = {
