@@ -25,6 +25,7 @@ def message_callback(ch, method, props, body):
         msg = json.loads(body)
     except ValueError:
         print 'Invalid message - JSON parsing failed'
+        logger.error('Invalid message - JSON parsing failed')
 
     if 'resources' in msg:
         parse_resources(msg, props.timestamp)
@@ -32,7 +33,8 @@ def message_callback(ch, method, props, body):
         parse_status(msg, props.timestamp)
     else:
         print 'Invalid message - missing a "resources" or "clouds" key'
-
+        logger.error('Invalid message - missing a "resources" or "clouds" key')
+        
     # Acknowledge message to prevent re-queueing
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
