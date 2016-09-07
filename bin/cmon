@@ -114,9 +114,12 @@ def parse_status(msg, timestamp):
             'mips':    0,
             'kflops':  0,
         }
+        
         logger.debug("VMs loop...")
         logger.debug("cloud_vms: %s",len(cloud['vms']))
         logger.debug(cloud['vms'])
+        logger.debug(type(cloud['vms']))
+
         for vm in cloud['vms']:
             logger.debug("0")
             vm_id = vm['hostname']
@@ -190,7 +193,7 @@ def parse_status(msg, timestamp):
                 grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']][vm_status] += 1
             else:
                 grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['unknown'] += 1
-
+        logger.debug('done for each loop on cloud dict')
         cloud_id = '.'.join((grid_name, cloud_name))
         cloud_doc = {
             '_id': cloud_id,
