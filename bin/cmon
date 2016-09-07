@@ -87,6 +87,7 @@ def parse_status(msg, timestamp):
     #logger.debug(msg)
     logger.debug("clouds: %s", len(msg['clouds']))
 
+    logger.debug("Entering cloud loop...")
     for cloud in msg['clouds']:
         cloud_name = cloud['name']
 
@@ -113,12 +114,13 @@ def parse_status(msg, timestamp):
             'mips':    0,
             'kflops':  0,
         }
-
+        logger.debug("Entered vm loop...")
         for vm in cloud['vms']:
             vm_id = vm['hostname']
 
             # Ignore VMs without a hostname
             if not vm_id:
+                logger.debug("No vms to process")
                 continue
 
             active_vms.append(vm_id)
@@ -203,6 +205,7 @@ def parse_status(msg, timestamp):
 
     logger.debug("jobs: %s", len(msg['jobs']))
 
+    logger.debug("Entering jobs loop...")
     for job in msg['jobs']:
         job_id = job['id']
         job_host = job.get('remote_host')
@@ -305,7 +308,7 @@ def parse_status(msg, timestamp):
             grid['clouds'][job_doc['cloud']]['jobs']['all'][job['status']] += 1
 
     # Process Slots ############################################################
-
+    logger.debug("Entering slots loop...")
     for slot in msg['slots']:
         (slot_name, machine) = slot['name'].split('@')
 
@@ -329,7 +332,7 @@ def parse_status(msg, timestamp):
                     cloud['slots'][vmtype][slot_name] = 1
 
     # Process Summary ##########################################################
-
+    logger.debug("Process Summary loop...")
     for cloud_name, cloud in grid['clouds'].iteritems():
         idle = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
         idle['total'] = 0
@@ -353,7 +356,7 @@ def parse_status(msg, timestamp):
     db.status.replace_one({'_id': grid_name}, msg, True)
 
     # Mark Inactive VMs ########################################################
-
+    logger.debug("Inactive VMs loop...")
     for vm_id, db_vm in db_vms.iteritems():
         if vm_id not in active_vms and db_vm['status'] != 'gone':
             vm_doc = db_vm
@@ -364,7 +367,7 @@ def parse_status(msg, timestamp):
             db.vms.replace_one({'_id': vm_id}, vm_doc, True)
 
     # Mark Inactive Jobs #######################################################
-
+    logger.debug("Inactive jobs loop...")
     for job_id, db_job in db_jobs.iteritems():
         if job_id not in active_jobs and db_job['status'] != 'gone':
             job_doc = db_job
@@ -377,7 +380,7 @@ def parse_status(msg, timestamp):
     # Update Graphite ##########################################################
 
     metrics = {}
-
+    logger.debug("Update Graphite...")
     for cloud_name, cloud in grid['clouds'].iteritems():
         for metric in ['enabled', 'quota', 'mips', 'kflops']:
             path = CARBON_PATHS['cloud_other'].format(grid_name, cloud_name, metric)
