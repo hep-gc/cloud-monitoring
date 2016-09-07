@@ -115,6 +115,8 @@ def parse_status(msg, timestamp):
             'kflops':  0,
         }
         logger.debug("VMs loop...")
+        logger.debug("cloud_vms: %s",len(cloud['vms']))
+        logger.debug(cloud['vms'])
         for vm in cloud['vms']:
             logger.debug("0")
             vm_id = vm['hostname']
