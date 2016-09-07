@@ -194,7 +194,11 @@ def parse_status(msg, timestamp):
             else:
                 grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['unknown'] += 1
         logger.debug('done for each loop on cloud dict')
-        cloud_id = '.'.join((grid_name, cloud_name))
+
+        logger.debug(type(grid_name))
+        logger.debug(type(cloud_name))
+        cloud_id = '.'.join([grid_name, cloud_name])
+        logger.debug("cloud_id: %s", clound_id)
         cloud_doc = {
             '_id': cloud_id,
             'grid': grid_name,
@@ -204,7 +208,6 @@ def parse_status(msg, timestamp):
             'quota': cloud['max_slots'],
         }
         
-        logger.debug("cloud_id: %s", clound_id)
         db.clouds.replace_one({'_id': cloud_id}, cloud_doc, True)
 
     # Process Jobs #############################################################
