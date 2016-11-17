@@ -284,6 +284,11 @@ def get_history(targets, start='-1h', end='now'):
 
     metrics = query(targets, start, end)
 
+    f = open('/var/log/initpy.log', 'a')
+    f.write("get_history metrics:")
+    f.write(metrics)
+    f.close()
+
     try:
         metrics = json.loads(metrics)[0]['datapoints']
     except:
@@ -300,6 +305,11 @@ def get_history(targets, start='-1h', end='now'):
 def plotly(metrics=[], name='', color=None):
     """Convert a list of metric values to a Plot.ly object.
     """
+    f = open('/var/log/initpy.log', 'a')
+    f.write("plotly metrics:")
+    f.write(metrics)
+    f.close()
+  
     values, timestamps = zip(*metrics)
     trace = {
         'type': 'scatter',
