@@ -110,6 +110,12 @@ def data():
 
         traces = []
 
+
+        f = open('/var/log/initpy.log', 'a')
+        f.write("\ndata paths:")
+        f.write(paths)
+        f.close()
+
         for path in paths:
             name = path_to_name(path)
             trace = plotly(get_history(path, range_from, range_end), name=' '.join(name))
