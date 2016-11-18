@@ -287,6 +287,8 @@ def get_history(targets, start='-1h', end='now'):
     f = open('/var/log/initpy.log', 'a')
     f.write("get_history metrics:")
     f.write(metrics)
+    f.write("get_history targets:")
+    f.write(targets)
     f.close()
 
     try:
