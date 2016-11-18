@@ -110,17 +110,16 @@ def data():
 
         traces = []
 
-
         f = open('/var/log/initpy.log', 'a')
         f.write("\ndata paths:")
-        f.write(paths)
-        f.close()
 
         for path in paths:
+            f.write(path)
             name = path_to_name(path)
             trace = plotly(get_history(path, range_from, range_end), name=' '.join(name))
             traces.append(trace)
 
+        f.close()
         return json.dumps(traces, indent=4, separators=(',', ': '))
     else:
         return '{}'
