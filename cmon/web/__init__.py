@@ -65,6 +65,9 @@ with open(os.environ.get('CMON_CONFIG_FILE', DEFAULT_CONFIG_FILE), 'r') as confi
 db = MongoClient(config['mongodb']['server'], config['mongodb']['port'])[config['mongodb']['db']]
 es = Elasticsearch()
 
+graphite.GRAPHITE_HOST = config['graphite']['server']
+graphite.GRAPHITE_PORT = config['graphite']['web_port']
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
