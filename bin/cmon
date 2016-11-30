@@ -170,6 +170,7 @@ def parse_status(msg, timestamp):
             if vm['vmtype'] not in grid['clouds'][cloud_name]['vmtypes']:
                 grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']] = {
                     'total':    0,
+                    'total2':   0,
                     'starting': 0,
                     'running':  0,
                     'retiring': 0,
@@ -316,24 +317,30 @@ def parse_status(msg, timestamp):
     for slot in msg['slots']:
         (slot_name, machine) = slot['name'].split('@')
 
-        if '_' not in slot_name:
-            continue
-
         machine = machine.split('.')[0]
 
         for cloud_name, cloud in grid['clouds'].iteritems():
             if machine in cloud['vms']:
-                vmtype = cloud['vms'][machine]['vmtype']
 
-                cloud['vms'][machine]['count'] += 1
+                if '_' not in slot_name:
+                    grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] +=1
+                    logger.debug("cloud_name: %s vm count %s slot count: %s", cloud_name, grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total'] ,grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'])
+                    continue
 
-                if vmtype not in cloud['slots']:
-                    cloud['slots'][vmtype] = {}
 
-                if slot_name in cloud['slots'][vmtype]:
-                    cloud['slots'][vmtype][slot_name] += 1
                 else:
-                    cloud['slots'][vmtype][slot_name] = 1
+                    vmtype = cloud['vms'][machine]['vmtype']
+
+                    cloud['vms'][machine]['count'] += 1
+
+                    if vmtype not in cloud['slots']:
+                        cloud['slots'][vmtype] = {}
+
+                    if slot_name in cloud['slots'][vmtype]:
+                        cloud['slots'][vmtype][slot_name] += 1
+                    else:
+                        cloud['slots'][vmtype][slot_name] = 1
+
 
     # Process Summary ##########################################################
 
