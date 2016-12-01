@@ -61,6 +61,7 @@ def parse_status(msg, timestamp):
                 'total': 0,
                 'unexpanded': 0,
                 'idle': 0,
+                'lost': 0,
                 'running': 0,
                 'removed': 0,
                 'completed': 0,
@@ -351,14 +352,22 @@ def parse_status(msg, timestamp):
         idle = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
         idle['total'] = 0
 
+        lost = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
+        lost['total'] = 0
+
         if len(cloud['vms']):
             for vm_id, vm in cloud['vms'].iteritems():
                 if vm['status'] == 'running' and vm['count'] == 0:
                     idle['total'] += 1
                     idle[vm['vmtype']] += 1
 
+            lost['total'] +=  grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total']
+
+            lost[vm['vmtype']] =  grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total']
+
         cloud.pop('vms', None)
         cloud['idle'] = idle
+        cloud['lost'] = lost
 
     grid['last_updated'] = datetime.now()
 
