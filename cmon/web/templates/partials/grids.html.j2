@@ -75,15 +75,7 @@
 
                       <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.idle.{{ vmtype }}" class="metric count idle-vms">{{ cloud['idle'][vmtype] or '0' }}</td>
 
-                      {% if loop.first %}
-                        {% if 'lost' in cloud %}
-                          <td data-path="transformNull(removeBelowValue(diffSeries(sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.api-vms.{running,starting,error}),sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.vms.*.total)), 0), 0)" class="metric count lost-vms" rowspan="{{ vms|length }}">
-                            {{ cloud['lost'] }}
-                          </td>
-                        {% else %}
-                          <td rowspan="{{ vmtypes|length }}"></td>
-                        {% endif %}
-                      {% endif %}
+                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.lost.{{ vmtype }}" class="metric count lost-vms">{{ cloud['lost'][vmtype] or '0' }}</td>
 
                       <td>&nbsp;</td>
 
