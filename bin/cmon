@@ -370,8 +370,8 @@ def parse_status(msg, timestamp):
                 lost['total'] +=  missing
                 lost[vm['vmtype']] = missing
             else:
-                unreg['total'] +=  missing
-                unreg[vm['vmtype']] = missing
+                unreg['total'] +=  abs(missing)
+                unreg[vm['vmtype']] = abs(missing)
 
 
 
