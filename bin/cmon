@@ -343,7 +343,7 @@ def parse_status(msg, timestamp):
 
     # Process Summary ##########################################################
 
-    logger.debug("grid[clouds]: %s", grid['clouds'])       
+    #logger.debug("grid[clouds]: %s", grid['clouds'])       
     logger.debug("Process Summary loop...")
 
     for cloud_name, cloud in grid['clouds'].iteritems():
@@ -359,13 +359,16 @@ def parse_status(msg, timestamp):
                     idle['total'] += 1
                     idle[vm['vmtype']] += 1
 
-            lost['total'] +=  grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total']
+            lost['total'] +=  grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] 
 
-            lost[vm['vmtype']] =  grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total']
+            lost[vm['vmtype']] = grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2']
+
 
         cloud.pop('vms', None)
         cloud['idle'] = idle
         cloud['lost'] = lost
+
+    logger.debug("lost: %s",cloud['lost'])
 
     grid['last_updated'] = datetime.now()
 
