@@ -40,6 +40,7 @@
 
               <th class="count">Idle</th>
               <th class="count">Lost</th>
+              <th class="count">Unregistered</th>
 
               <th>&nbsp;</th>
 
@@ -76,6 +77,8 @@
                       <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.idle.{{ vmtype }}" class="metric count idle-vms">{{ cloud['idle'][vmtype] or '0' }}</td>
 
                       <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.lost.{{ vmtype }}" class="metric count lost-vms">{{ cloud['lost'][vmtype] or '0' }}</td>
+
+                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.unreg.{{ vmtype }}" class="metric count unreg-vms">{{ cloud['unreg'][vmtype] or '0' }}</td>
 
                       <td>&nbsp;</td>
 

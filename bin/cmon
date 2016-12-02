@@ -62,6 +62,7 @@ def parse_status(msg, timestamp):
                 'unexpanded': 0,
                 'idle': 0,
                 'lost': 0,
+                'unreg': 0,
                 'running': 0,
                 'removed': 0,
                 'completed': 0,
@@ -353,20 +354,31 @@ def parse_status(msg, timestamp):
         lost = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
         lost['total'] = 0
 
+        unreg = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
+        unreg['total'] = 0
+
         if len(cloud['vms']):
             for vm_id, vm in cloud['vms'].iteritems():
                 if vm['status'] == 'running' and vm['count'] == 0:
                     idle['total'] += 1
                     idle[vm['vmtype']] += 1
 
-            lost['total'] +=  grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] 
+            missing = grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total']
 
-            lost[vm['vmtype']] = grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2']
+            if missing >= 0:
+
+                lost['total'] +=  missing
+                lost[vm['vmtype']] = missing
+            else:
+                unreg['total'] +=  missing
+                unreg[vm['vmtype']] = missing
+
 
 
         cloud.pop('vms', None)
         cloud['idle'] = idle
         cloud['lost'] = lost
+        cloud['unreg'] = unreg
 
     logger.debug("lost: %s",cloud['lost'])
 
