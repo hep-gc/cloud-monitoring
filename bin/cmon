@@ -323,15 +323,13 @@ def parse_status(msg, timestamp):
         for cloud_name, cloud in grid['clouds'].iteritems():
             if machine in cloud['vms']:
 
+                vmtype = cloud['vms'][machine]['vmtype']
+
                 if '_' not in slot_name:
-                    grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] +=1
-                    logger.debug("cloud_name: %s vm count %s slot count: %s", cloud_name, grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total'] ,grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'])
+                    grid['clouds'][cloud_name]['vmtypes'][vmtype]['total2'] +=1
                     continue
 
-
                 else:
-                    vmtype = cloud['vms'][machine]['vmtype']
-
                     cloud['vms'][machine]['count'] += 1
 
                     if vmtype not in cloud['slots']:
