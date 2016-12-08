@@ -1,0 +1,19 @@
+find_defunct.sh   
+
+Scipt finds VMs where there is a java-defunct process running.
+
+If the (# defunct process) == (# running jobs), then the script creates a command 
+to remove the job(s) with a condor_rm command, and then a command to kill the VM.
+The commands are copied to /tmp/destroyCommand.txt.
+The commands in this file needs to be run manually.
+
+
+If the (# defunct process) != (# running jobs), then the script creates a command
+to retire the VM.
+The commands are copied to /tmp/retireCommand.txt and the command is executed.
+
+The process runs once an hour as a cron job under root.
+
+=================================================================================
+
+
