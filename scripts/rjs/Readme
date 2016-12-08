@@ -15,5 +15,15 @@ The commands are copied to /tmp/retireCommand.txt and the command is executed.
 The process runs once an hour as a cron job under root.
 
 =================================================================================
+bmark and bmark-belle
+
+Scripts to extract benchmarks and CPU times for all VMs that are no longer running.
+
+The process runs as a cron job under user rsobie using the files in ~rsobie/benchmarks.
+The scripts run are not linked to the Git versions at the moment.
+
+./bmark <start time> <# days>
+
+=================================================================================
 
 

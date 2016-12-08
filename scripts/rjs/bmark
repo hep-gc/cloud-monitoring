@@ -1,0 +1,308 @@
+#!/bin/env python
+import json
+import time
+import math
+import sys
+import datetime
+import vm_overlap
+
+myDebug = False
+
+# input arguments:  start-date (epoch time) and number of days for measurement
+total = len(sys.argv)
+if total != 1 and total != 3:
+   print 'incorrect number of arguments (1 or 3) : ', total
+   quit()
+
+# determine end time of interval (current or input time)
+mintime = 1470009600  # August 1 2016
+stime = int(time.time())
+ndays = 1
+if total == 3:
+   ndays = int( sys.argv[2] )
+   if ndays < 1 or ndays > 31:
+      print 'Invalid input for ndays (1-31) : ', ndays
+      quit()
+
+   if int(sys.argv[1]) == 0:
+      xxx = 0   # dummy command
+   else:
+      stime = int( sys.argv[1] )
+      if stime != 0 and stime < mintime:
+         print 'invalid input time : ', stime, ' prior to Aug 1 2016 :', mintime
+         quit()
+
+if myDebug:
+   print 'Measuring benchmark-time for ', ndays, ' days prior to date ', stime, 
+   print datetime.datetime.fromtimestamp( stime ).strftime('%b %d %Y %H:%M:%S')
+
+period_range         = int('86400') * int( ndays )
+period_endtime       = stime
+benchmark_start_time = period_endtime - period_range
+benchmark_end_time   = period_endtime
+
+if myDebug:
+   print 'Period (endtime,range) : ', period_endtime, period_range
+   print 'bmk times : ', benchmark_start_time,benchmark_end_time,benchmark_end_time-benchmark_start_time
+
+
+
+# ======================================================================================
+# declare and initialize variables
+# ======================================================================================
+log_file = '/var/log/vm_efficiency.log'
+
+# clouds
+nclouds = 8
+clouds = ['beaver','cc-west','cc-east','chameleon','dair-ab','dair-qc','azure','ec2']
+
+# vm types
+ntypes = 3
+vmtype = ['atlas-worker','atlas-mcore-worker','atlas-mcore-himem']
+vm_fraction = float(0)
+
+#
+nbmk                     = [0] * nclouds
+sumbmk                   = [0] * nclouds 
+sum_bt_total             = float(0)
+sum_bt_user              = float(0)
+sum_bt_cloud_total       = [0.] * nclouds
+sum_bt_cloud_user        = [0.] * nclouds
+sum_bt_cloud_score_total = [0.] * nclouds
+sum_bt_cloud_score_user  = [0.] * nclouds
+sum_bt_cloud_mcore_total = [0.] * nclouds
+sum_bt_cloud_mcore_user  = [0.] * nclouds
+sum_bt_cloud_himem_total = [0.] * nclouds
+sum_bt_cloud_himem_user  = [0.] * nclouds
+
+# temporary
+test_bmk = 0
+test_num = 0
+test_total = 0
+test_user  = 0
+
+# ======================================================================================
+# Main Loop - Read and print the log file
+# ======================================================================================
+fd = open(log_file)
+for line in fd:
+  dataline = json.loads(line)
+
+#  print dataline
+
+# missing benchmark values
+  if 'fastBmk' not in dataline:
+     # print 'Warning - fastBmk not found in entry. Skipping entry'
+     continue
+  if 'vmtype' not in dataline:
+     # print 'Warning - vmtype not found in the entry. Skipping entry'
+     continue
+
+
+# IAAS system
+  if not( dataline['central_manager'].startswith('condor') ):
+     # print 'test NOT : ', dataline['central_manager']
+     continue
+
+# identify cloud 
+  cloud_type = int(-1)
+  if dataline['host'].startswith('beaver'):
+     cloud_type = 0
+  if dataline['host'].startswith('cc-west'):
+     cloud_type = 1
+  if dataline['host'].startswith('cc-east'):
+     cloud_type = 2
+  if dataline['host'].startswith('chameleon'):
+     cloud_type = 3
+  if dataline['host'].startswith('dair-ab'):
+     cloud_type = 4
+  if dataline['host'].startswith('dair-qc'):
+     cloud_type = 5
+  if dataline['host'].startswith('azure'):
+     cloud_type = 6
+  if dataline['host'].startswith('ec2'):
+     cloud_type = 7
+
+  if cloud_type == -1:
+     if myDebug:
+        print 'Warning - no cloud with this name : ', dataline['host']
+     continue
+
+
+# identify VM type
+  vm = int(-1)
+  if dataline['vmtype'] == vmtype[0]:
+     vm = 0
+  if dataline['vmtype'] == vmtype[1]:
+     vm = 1
+  if dataline['vmtype'] == vmtype[2]:
+     vm = 2
+
+  if vm == -1:
+     continue
+
+
+# determine if VM overlaps with measurement window (and determine fraction of overlap)
+  vm_start_time = int(dataline['utc'])-int(round(float(dataline['uptime'])))
+  vm_end_time = int(dataline['utc'])
+  otype, vm_fraction = vm_overlap.overlap( vm_start_time, vm_end_time, benchmark_start_time, benchmark_end_time)
+
+  if myDebug:
+     print 'otype, vm_frac :', otype, '{:8.3f}'.format(vm_fraction)
+
+  if otype == 1:
+     continue
+
+# benchmark and check that it is a float point number
+  string_bmk = dataline['fastBmk']
+  try:
+      bmk = float(dataline['fastBmk'])
+#      print 'testing bmk', bmk
+  except ValueError:
+#      print "fastBmk is not a float = ", string_bmk
+      continue
+
+# count and sum benchmark for averaging
+  sumbmk[cloud_type]  += bmk
+  nbmk[cloud_type]    += float(1)
+
+# test calculations
+  if myDebug and cloud_type == 6:
+     print 'Testing (total, user, vm_frac) =',clouds[cloud_type],
+     print '{:8.1f}'.format(float(dataline['Total'])/1000),
+     print '{:8.1f}'.format(float(dataline['user'])/1000),
+     print '{:8.3f}'.format(vm_fraction)
+     test_num += float(1)
+     test_bmk += bmk
+     test_total += float(dataline['Total'])/1000
+     test_user  += float(dataline['user'])/1000
+   
+
+# delivered and used (kilo) "benchmark-time" of the VM (time is total for all cores)
+  bt_total = bmk * float(dataline['Total']) * vm_fraction /1E3
+  bt_user  = bmk * float(dataline['user'])  * vm_fraction /1E3
+
+# sum of "benchmark-time"
+  sum_bt_total += bt_total
+  sum_bt_user  += bt_user
+  sum_bt_cloud_total[cloud_type] += bt_total
+  sum_bt_cloud_user[cloud_type]  += bt_user
+
+# sum of "benchmark-time" for each cloud and job type
+  if vm==0:
+     sum_bt_cloud_score_total[cloud_type] += bt_total
+     sum_bt_cloud_score_user[cloud_type]  += bt_user
+  if vm==1:
+     sum_bt_cloud_mcore_total[cloud_type] += bt_total
+     sum_bt_cloud_mcore_user[cloud_type]  += bt_user
+  if vm==2:
+     sum_bt_cloud_himem_total[cloud_type] += bt_total
+     sum_bt_cloud_himem_user[cloud_type]  += bt_user
+
+
+fd.close()
+# <----------------------------------------------- end of main loop
+
+# convert results from seconds to hours (3600)
+hours = float(3600)
+sum_bt_user  /= hours 
+sum_bt_total /= hours
+for i in range(nclouds):
+    sum_bt_cloud_user[i] /= hours
+    sum_bt_cloud_total[i] /= hours
+    sum_bt_cloud_score_user[i] /= hours
+    sum_bt_cloud_score_total[i] /= hours
+    sum_bt_cloud_mcore_user[i] /= hours 
+    sum_bt_cloud_mcore_total[i] /= hours
+    sum_bt_cloud_himem_user[i] /= hours 
+    sum_bt_cloud_himem_total[i] /= hours
+
+
+# Calculate efficiency (user/total)
+eff_bt              = float(0)
+eff_bt_cloud        = [0.] * nclouds
+eff_bt_cloud_score  = [0.] * nclouds
+eff_bt_cloud_mcore  = [0.] * nclouds
+eff_bt_cloud_himem  = [0.] * nclouds
+
+if sum_bt_total != 0:
+   eff_bt = sum_bt_user/sum_bt_total
+for i in range(nclouds):
+   if sum_bt_cloud_total[i] != 0:
+      eff_bt_cloud[i] = sum_bt_cloud_user[i] / sum_bt_cloud_total[i]
+   if sum_bt_cloud_score_total[i] != 0:
+      eff_bt_cloud_score[i] = sum_bt_cloud_score_user[i] / sum_bt_cloud_score_total[i]
+   if sum_bt_cloud_mcore_total[i] != 0:
+      eff_bt_cloud_mcore[i] = sum_bt_cloud_mcore_user[i] / sum_bt_cloud_mcore_total[i]
+   if sum_bt_cloud_himem_total[i] != 0:
+      eff_bt_cloud_himem[i] = sum_bt_cloud_himem_user[i] / sum_bt_cloud_himem_total[i]
+
+
+# print out results
+# print '\n'
+# print 'Integrated Fast-benchmark seconds:'
+# print '\n'
+print '{:6s}'.format('Cloud'),
+print '{:>8s}'.format('#'),
+print '{:>6s}'.format('Bmk'),
+print '{:>18s}'.format('Total'),
+print '{:>26s}'.format('S-Core'),
+print '{:>26s}'.format('M-Core'),
+print '{:>26s}'.format('Himem')
+
+print '{:>49s}'.format('User   Total     Eff'),
+print '{:>26s}'.format('User   Total     Eff'),
+print '{:>26s}'.format('User   Total     Eff'),
+print '{:>26s}'.format('User   Total     Eff')
+
+for i in range(nclouds):
+   if nbmk[i] == 0:
+      continue
+   print '{:10s}'.format(clouds[i]),
+   print '{:4.0f}'.format(nbmk[i]),
+   print '{:6.1f}'.format(sumbmk[i]/nbmk[i]),
+   print '{:10.1f}'.format(sum_bt_cloud_user[i]),
+   print '{:7.1f}'.format(sum_bt_cloud_total[i]),
+   print '{:7.3f}'.format(eff_bt_cloud[i]),
+   print '{:10.1f}'.format(sum_bt_cloud_score_user[i]),
+   print '{:7.1f}'.format(sum_bt_cloud_score_total[i]),
+   print '{:7.3f}'.format(eff_bt_cloud_score[i]),
+   print '{:10.1f}'.format(sum_bt_cloud_mcore_user[i]),
+   print '{:7.1f}'.format(sum_bt_cloud_mcore_total[i]),
+   print '{:7.3f}'.format(eff_bt_cloud_mcore[i]),
+   print '{:10.1f}'.format(sum_bt_cloud_himem_user[i]),
+   print '{:7.1f}'.format(sum_bt_cloud_himem_total[i]),
+   print '{:7.3f}'.format(eff_bt_cloud_himem[i])
+
+
+# -----------------------------------------------------------------------------------
+# A single core with FastBmk=20, delivers 20*86.4 = 1728 kilo-FastBmk-seconds per day
+# 100  cores =   173 mega-FastBmk-seconds in a day
+# 1000 cores =  1730 mega-FastBmk-seconds in a day
+# 1000 cores = 17300 mega-FastBmk-seconds in 10 days
+# -----------------------------------------------------------------------------------
+print '{:10s}'.format('Total'),
+print '{:22.1f}'.format(sum_bt_user),
+print '{:7.1f}'.format(sum_bt_total)
+print datetime.datetime.fromtimestamp( stime ).strftime('%A %B %d  %H:%M:%S')
+
+# format for day record
+if ndays == 1:
+   print  datetime.datetime.fromtimestamp( stime ).strftime('%m-%d-%Y'),
+   print '{:3d}'.format(ndays),
+   print '{:10.1f}'.format(sum_bt_user),
+   print '{:10.1f}'.format(sum_bt_total),
+   print '{:6.3f}'.format(eff_bt)
+
+# tests 
+if myDebug:
+   print '\n'
+   print "Test (num, bmk, user, total,bmk*total/1000,user/total) = ",
+   print '{:10.1f}'.format(test_num),
+   print '{:10.2f}'.format(test_bmk/test_num),
+   print '{:10.1f}'.format(test_user),
+   print '{:10.1f}'.format(test_total),
+   print '{:10.1f}'.format(test_bmk/test_num*test_total/1000),
+   print '{:10.3f}'.format(test_user/test_total)
+
+
