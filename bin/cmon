@@ -158,15 +158,12 @@ def parse_status(msg, timestamp):
             if db_vm:
                 vm_status_history = db_vm.get('status_history', [])
                 if vm_status != db_vm_status:
-                    logger.debug('%s - %s/%s %s -> %s', grid_name, cloud_name, vm_id, db_vm_status, vm_status)
                     vm_status_history.append([datetime.now(), vm_status])
             else:
-                logger.debug('%s - %s/%s %s', grid_name, cloud_name, vm_id, vm_status)
                 vm_status_history = [[datetime.now(), vm_status]]
 
             vm_doc['status_history'] = vm_status_history
 
-            logger.debug("vm_id: %s")
             db.vms.replace_one({'_id': vm_id}, vm_doc, True)
 
             if vm['vmtype'] not in grid['clouds'][cloud_name]['vmtypes']:
