@@ -54,7 +54,9 @@ def parse_resources(msg, timestamp):
 
 def parse_status(msg, timestamp):
     grid_name = msg['grid']
+    print msg['sysinfo']
     grid = {
+        'sysinfo': msg['sysinfo'],
         'clouds': {},
         'jobs': {
             'all': {
