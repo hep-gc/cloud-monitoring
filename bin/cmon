@@ -109,6 +109,8 @@ def parse_status(msg, timestamp):
                     'total': 0,
                     'unexpanded': 0,
                     'idle': 0,
+                    'lost': 0,
+                    'unreg': 0,
                     'running': 0,
                     'removed': 0,
                     'completed': 0,
@@ -295,6 +297,8 @@ def parse_status(msg, timestamp):
                 grid['jobs'][job_type] = {
                     'unexpanded': 0,
                     'idle': 0,
+                    'lost': 0,
+                    'unreg': 0,
                     'running': 0,
                     'removed': 0,
                     'completed': 0,
