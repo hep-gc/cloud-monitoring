@@ -47,6 +47,8 @@ DATE_RANGES = [
 SUMMARY_METRICS = [
     'grids.*.clouds.*.enabled',
     'grids.*.clouds.*.idle.*',
+    'grids.*.clouds.*.lost.*',
+    'grids.*.clouds.*.unreg.*',
     'grids.*.clouds.*.quota',
     'grids.*.clouds.*.slots.*.*',
     'grids.*.clouds.*.jobs.*.*',
