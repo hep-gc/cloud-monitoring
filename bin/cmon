@@ -435,6 +435,14 @@ def parse_status(msg, timestamp):
         for vmtype, count in cloud['idle'].iteritems():
             path = CARBON_PATHS['cloud_idle'].format(grid_name, cloud_name, vmtype)
             metrics[path] = count
+        
+        for vmtype, count in cloud['lost'].iteritems():
+            path = CARBON_PATHS['cloud_lost'].format(grid_name, cloud_name, vmtype)
+            metrics[path] = count
+
+        for vmtype, count in cloud['unreg'].iteritems():
+            path = CARBON_PATHS['cloud_unreg'].format(grid_name, cloud_name, vmtype)
+            metrics[path] = count
 
         for vmtype, statuses in cloud['vmtypes'].iteritems():
             for status, count in statuses.iteritems():
