@@ -459,6 +459,11 @@ def parse_status(msg, timestamp):
             path = CARBON_PATHS['jobs'].format(grid_name, jobtype, status)
             metrics[path] = count
 
+    for stat in grid['sysinfo'].iteritems():
+        path = CARBON_PATHS['sysinfo'].format(grid_name, stat)
+        metrics[path] = count
+
+
     graphite_metrics = []
     for path, count in metrics.iteritems():
         graphite_metrics.append((path, (timestamp, count)))
