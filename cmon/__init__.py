@@ -10,6 +10,7 @@ CARBON_PATHS = {
 	'cloud_lost': 'grids.{}.clouds.{}.lost.{}',
     'cloud_unreg': 'grids.{}.clouds.{}.unreg.{}',
     'jobs': 'grids.{}.jobs.{}.{}',
+    'sysinfo': 'grids.{}.sysinfo.{}',
     'cloud_vms': 'grids.{}.clouds.{}.vms.{}.{}',
 }
 
