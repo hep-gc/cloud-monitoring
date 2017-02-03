@@ -1,6 +1,6 @@
 {% set vm_statuses  = ['starting', 'running', 'retiring', 'error'] %}
 {% set job_statuses = ['total', 'idle', 'running', 'completed', 'held'] %}
-{% set sys_statuses = ['cpu', 'ram', 'swap', 'disk'] %}
+{% set sys_statuses = ['load', 'cpu', 'ram', 'swap','si' ,'so' , 'disk'] %}
 
 {% for grid_name in grids|sort %}
   {% set grid = grids[grid_name] %} 
