@@ -160,7 +160,6 @@
 	<table class="table table-condensed">
           <thead>
             <tr>
-              <th rowspan="2" class="name">CS Machine</th>
               <th class="group" colspan="4">CS System Status</th>
             </tr>
             <tr>
@@ -171,7 +170,6 @@
           </thead>
           <tbody>
             <tr>
-              <td class="name">{{ grid_name }}</td>
 
               {% for status in sys_statuses %}
                 {% set path  = 'grids.{}.sysinfo.{}'.format(grid_name, status) %}
