@@ -383,8 +383,6 @@ def parse_status(msg, timestamp):
         cloud['lost'] = lost
         cloud['unreg'] = unreg
 
-    logger.debug("lost: %s",cloud['lost'])
-
     grid['last_updated'] = datetime.now()
 
     logger.debug("grid_name: %s", grid_name)
