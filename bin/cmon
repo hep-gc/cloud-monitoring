@@ -54,13 +54,17 @@ def parse_resources(msg, timestamp):
 
 def parse_status(msg, timestamp):
     grid_name = msg['grid']
+    print msg['sysinfo']
     grid = {
+        'sysinfo': msg['sysinfo'],
         'clouds': {},
         'jobs': {
             'all': {
                 'total': 0,
                 'unexpanded': 0,
                 'idle': 0,
+                'lost': 0,
+                'unreg': 0,
                 'running': 0,
                 'removed': 0,
                 'completed': 0,
@@ -105,6 +109,8 @@ def parse_status(msg, timestamp):
                     'total': 0,
                     'unexpanded': 0,
                     'idle': 0,
+                    'lost': 0,
+                    'unreg': 0,
                     'running': 0,
                     'removed': 0,
                     'completed': 0,
@@ -156,20 +162,18 @@ def parse_status(msg, timestamp):
             if db_vm:
                 vm_status_history = db_vm.get('status_history', [])
                 if vm_status != db_vm_status:
-                    logger.debug('%s - %s/%s %s -> %s', grid_name, cloud_name, vm_id, db_vm_status, vm_status)
                     vm_status_history.append([datetime.now(), vm_status])
             else:
-                logger.debug('%s - %s/%s %s', grid_name, cloud_name, vm_id, vm_status)
                 vm_status_history = [[datetime.now(), vm_status]]
 
             vm_doc['status_history'] = vm_status_history
 
-            logger.debug("vm_id: %s")
             db.vms.replace_one({'_id': vm_id}, vm_doc, True)
 
             if vm['vmtype'] not in grid['clouds'][cloud_name]['vmtypes']:
                 grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']] = {
                     'total':    0,
+                    'total2':   0,
                     'starting': 0,
                     'running':  0,
                     'retiring': 0,
@@ -293,6 +297,8 @@ def parse_status(msg, timestamp):
                 grid['jobs'][job_type] = {
                     'unexpanded': 0,
                     'idle': 0,
+                    'lost': 0,
+                    'unreg': 0,
                     'running': 0,
                     'removed': 0,
                     'completed': 0,
@@ -316,33 +322,43 @@ def parse_status(msg, timestamp):
     for slot in msg['slots']:
         (slot_name, machine) = slot['name'].split('@')
 
-        if '_' not in slot_name:
-            continue
-
         machine = machine.split('.')[0]
 
         for cloud_name, cloud in grid['clouds'].iteritems():
             if machine in cloud['vms']:
+
                 vmtype = cloud['vms'][machine]['vmtype']
 
-                cloud['vms'][machine]['count'] += 1
+                if '_' not in slot_name:
+                    grid['clouds'][cloud_name]['vmtypes'][vmtype]['total2'] +=1
+                    continue
 
-                if vmtype not in cloud['slots']:
-                    cloud['slots'][vmtype] = {}
-
-                if slot_name in cloud['slots'][vmtype]:
-                    cloud['slots'][vmtype][slot_name] += 1
                 else:
-                    cloud['slots'][vmtype][slot_name] = 1
+                    cloud['vms'][machine]['count'] += 1
+
+                    if vmtype not in cloud['slots']:
+                        cloud['slots'][vmtype] = {}
+
+                    if slot_name in cloud['slots'][vmtype]:
+                        cloud['slots'][vmtype][slot_name] += 1
+                    else:
+                        cloud['slots'][vmtype][slot_name] = 1
+
 
     # Process Summary ##########################################################
 
-    logger.debug("grid[clouds]: %s", grid['clouds'])       
+    #logger.debug("grid[clouds]: %s", grid['clouds'])       
     logger.debug("Process Summary loop...")
 
     for cloud_name, cloud in grid['clouds'].iteritems():
         idle = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
         idle['total'] = 0
+
+        lost = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
+        lost['total'] = 0
+
+        unreg = dict((vmtype, 0) for vmtype in cloud['vmtypes'].keys())
+        unreg['total'] = 0
 
         if len(cloud['vms']):
             for vm_id, vm in cloud['vms'].iteritems():
@@ -350,8 +366,22 @@ def parse_status(msg, timestamp):
                     idle['total'] += 1
                     idle[vm['vmtype']] += 1
 
+            missing = grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total2'] - grid['clouds'][cloud_name]['vmtypes'][vm['vmtype']]['total']
+
+            if missing >= 0:
+
+                lost['total'] +=  missing
+                lost[vm['vmtype']] = missing
+            else:
+                unreg['total'] +=  abs(missing)
+                unreg[vm['vmtype']] = abs(missing)
+
+
+
         cloud.pop('vms', None)
         cloud['idle'] = idle
+        cloud['lost'] = lost
+        cloud['unreg'] = unreg
 
     grid['last_updated'] = datetime.now()
 
@@ -403,6 +433,14 @@ def parse_status(msg, timestamp):
         for vmtype, count in cloud['idle'].iteritems():
             path = CARBON_PATHS['cloud_idle'].format(grid_name, cloud_name, vmtype)
             metrics[path] = count
+        
+        for vmtype, count in cloud['lost'].iteritems():
+            path = CARBON_PATHS['cloud_lost'].format(grid_name, cloud_name, vmtype)
+            metrics[path] = count
+
+        for vmtype, count in cloud['unreg'].iteritems():
+            path = CARBON_PATHS['cloud_unreg'].format(grid_name, cloud_name, vmtype)
+            metrics[path] = count
 
         for vmtype, statuses in cloud['vmtypes'].iteritems():
             for status, count in statuses.iteritems():
@@ -418,6 +456,10 @@ def parse_status(msg, timestamp):
         for status, count in statuses.iteritems():
             path = CARBON_PATHS['jobs'].format(grid_name, jobtype, status)
             metrics[path] = count
+
+    for stattype, status in grid['sysinfo'].iteritems():
+        path = CARBON_PATHS['sysinfo'].format(grid_name, stattype)
+        metrics[path] = status
 
     graphite_metrics = []
     for path, count in metrics.iteritems():

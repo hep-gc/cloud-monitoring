@@ -47,6 +47,8 @@ DATE_RANGES = [
 SUMMARY_METRICS = [
     'grids.*.clouds.*.enabled',
     'grids.*.clouds.*.idle.*',
+    'grids.*.clouds.*.lost.*',
+    'grids.*.clouds.*.unreg.*',
     'grids.*.clouds.*.quota',
     'grids.*.clouds.*.slots.*.*',
     'grids.*.clouds.*.jobs.*.*',
@@ -54,6 +56,7 @@ SUMMARY_METRICS = [
     'grids.*.clouds.*.api-vms.*',
     'grids.*.heartbeat.*',
     'grids.*.jobs.*.*',
+    'grids.*.sysinfo.*',
 ]
 
 
@@ -64,6 +67,9 @@ with open(os.environ.get('CMON_CONFIG_FILE', DEFAULT_CONFIG_FILE), 'r') as confi
 
 db = MongoClient(config['mongodb']['server'], config['mongodb']['port'])[config['mongodb']['db']]
 es = Elasticsearch()
+
+graphite.GRAPHITE_HOST = config['graphite']['server']
+graphite.GRAPHITE_PORT = config['graphite']['web_port']
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -300,6 +306,7 @@ def get_history(targets, start='-1h', end='now'):
 def plotly(metrics=[], name='', color=None):
     """Convert a list of metric values to a Plot.ly object.
     """
+    
     values, timestamps = zip(*metrics)
     trace = {
         'type': 'scatter',

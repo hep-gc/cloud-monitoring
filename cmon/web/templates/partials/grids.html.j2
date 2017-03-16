@@ -1,9 +1,10 @@
 {% set vm_statuses  = ['starting', 'running', 'retiring', 'error'] %}
 {% set job_statuses = ['total', 'idle', 'running', 'completed', 'held'] %}
+{% set sys_statuses = ['load', 'cpu', 'ram', 'swap','si' ,'so' , 'disk'] %}
 
 {% for grid_name in grids|sort %}
-  {% set grid = grids[grid_name] %}
-  
+  {% set grid = grids[grid_name] %} 
+ 
   <h4>
     {{ grid_name }}
     <small>{{ grid['last_updated_str'] }}</small>
@@ -40,6 +41,7 @@
 
               <th class="count">Idle</th>
               <th class="count">Lost</th>
+              <th class="count">Unregistered</th>
 
               <th>&nbsp;</th>
 
@@ -75,15 +77,9 @@
 
                       <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.idle.{{ vmtype }}" class="metric count idle-vms">{{ cloud['idle'][vmtype] or '0' }}</td>
 
-                      {% if loop.first %}
-                        {% if 'lost' in cloud %}
-                          <td data-path="transformNull(removeBelowValue(diffSeries(sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.api-vms.{running,starting,error}),sumSeries(grids.{{ grid_name }}.clouds.{{ cloud_name }}.vms.*.total)), 0), 0)" class="metric count lost-vms" rowspan="{{ vms|length }}">
-                            {{ cloud['lost'] }}
-                          </td>
-                        {% else %}
-                          <td rowspan="{{ vmtypes|length }}"></td>
-                        {% endif %}
-                      {% endif %}
+                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.lost.{{ vmtype }}" class="metric count lost-vms">{{ cloud['lost'][vmtype] or '0' }}</td>
+
+                      <td data-path="grids.{{ grid_name }}.clouds.{{ cloud_name }}.unreg.{{ vmtype }}" class="metric count unreg-vms">{{ cloud['unreg'][vmtype] or '0' }}</td>
 
                       <td>&nbsp;</td>
 
@@ -160,6 +156,34 @@
             {% endfor %}
           </tbody>
         </table>
+
+	<table class="table table-condensed">
+          <thead>
+            <tr>
+              <th class="group" colspan="7">CS System Status</th>
+            </tr>
+            <tr>
+              {% for status in sys_statuses %}
+                <th class="count">{{ status.title() }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+
+              {% for status in sys_statuses %}
+                {% set path  = 'grids.{}.sysinfo.{}'.format(grid_name, status) %}
+                {% set value = grid['sysinfo'][status] or '0' %}
+
+                <td data-path="{{ path }}" class="metric count jobs {{ status }}">{{ value }}</td>
+              {% endfor %}
+ 
+            </tr>
+
+          </tbody>
+        </table>
+
+
       </div>
     </div>
   {% else %}
