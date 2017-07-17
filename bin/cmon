@@ -320,6 +320,10 @@ def parse_status(msg, timestamp):
     logger.debug("Slots loop...")
 
     for slot in msg['slots']:
+
+        if '@' not in slot['name']:
+            continue
+
         (slot_name, machine) = slot['name'].split('@')
 
         machine = machine.split('.')[0]
